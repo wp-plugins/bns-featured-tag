@@ -55,7 +55,10 @@ By default, the plugin will use the same style elements used in the "posts" sect
 
 To have the plugin output look different than the post output simply copy the particular "`.post`" element(s) you want to work with and add the `.widget` class to the beginning of it.
 
-For example, your posts have a black background using `.post {background: #000000;}` and you want the plugin to have a white background then use `.widget .post {background: #FFFFFF;}`
+For example, your posts have a black background using:
+  `.post {background: #000000;}`
+and you want the plugin to have a white background then use:
+  `.widget .post {background: #FFFFFF;}`
 
 == Screenshots ==
 
