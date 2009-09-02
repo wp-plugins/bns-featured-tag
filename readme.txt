@@ -4,7 +4,7 @@ Donate link: http://buynowshop.com
 Tags: posts, tags, featured, multi-widget, user-options
 Requires at least: 2.8
 Tested up to: 2.8.4
-Stable tag: 1.1
+Stable tag: 1.2
 
 Displays most recent posts from a specific featured tag or tags.
 
@@ -49,22 +49,15 @@ This section describes how to install the plugin and get it working.
 
 Yes, this plugin has been made for multi-widget compatibility. Each instance of the widget will display, if wanted, differently than every other instance of the widget.
 
-= How can I change the look of the plugin? =
-
-By default, the plugin will use the same style elements used in the "posts" section of the style.css file in the blog's current theme folder.
-
-To have the plugin output look different than the post output simply copy the particular "`.post`" element(s) you want to work with and add the `.widget` class to the beginning of it.
-
-For example, your posts have a black background using:
-  `.post {background: #000000;}`
-and you want the plugin to have a white background then use:
-  `.widget .post {background: #FFFFFF;}`
-
 == Screenshots ==
 
 1. The options panel.
 
 == Changelog ==
+
+= 1.2 =
+* code clean up
+* changed the_content(__('Read more ...')) to the_content() as a more "default" version
 
 = 1.1 =
 * added option for Post Titles only

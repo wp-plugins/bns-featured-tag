@@ -3,7 +3,7 @@
 Plugin Name: BNS Featured Tag
 Plugin URI: http://buynowshop.com/plugins/bns-featured-tag/
 Description: Plugin with multi-widget functionality that displays most recent posts from specific tag or tags (set with user options). Also includes user options to display: Author and meta details; comment totals; post categories; post tags; and either full post or excerpt (or any combination).  
-Version: 1.1
+Version: 1.2
 Author: Edward Caissie
 Author URI: http://edwardcaissie.com/
 */
@@ -101,12 +101,12 @@ function widget( $args, $instance ) {
 		$instance['title'] = strip_tags( $new_instance['title'] );
 		$instance['tag_choice'] = strip_tags( $new_instance['tag_choice'] );
 		$instance['show_count'] = strip_tags( $new_instance['show_count'] );
-		$instance['show_meta'] = strip_tags( $new_instance['show_meta'] );
-		$instance['show_comments'] = strip_tags( $new_instance['show_comments'] );
-		$instance['show_cats'] = strip_tags( $new_instance['show_cats'] );
-		$instance['show_tags'] = strip_tags( $new_instance['show_tags'] );
-		$instance['only_titles'] = strip_tags( $new_instance['only_titles'] );		
-		$instance['show_full'] = strip_tags( $new_instance['show_full'] );
+		$instance['show_meta'] = $new_instance['show_meta'];
+		$instance['show_comments'] = $new_instance['show_comments'];
+		$instance['show_cats'] = $new_instance['show_cats'];
+		$instance['show_tags'] = $new_instance['show_tags'];
+		$instance['only_titles'] = $new_instance['only_titles'];		
+		$instance['show_full'] = $new_instance['show_full'];
 		
 		return $instance;
 	}
