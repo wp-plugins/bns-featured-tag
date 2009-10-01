@@ -67,6 +67,10 @@ If you wish to increase the total posts displayed by the widget you can increase
 
 == Changelog ==
 
+= 1.4 =
+* added version control compared against $wp_version
+* added horizontal rule to option panel for clarity
+
 = 1.3 =
 * code cleanup and error trapping
 * added dynamic reference of maximum posts based on blog Settings | Reading "posts per page"
