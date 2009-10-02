@@ -4,7 +4,7 @@ Donate link: http://buynowshop.com
 Tags: posts, tags, featured, multi-widget, user-options
 Requires at least: 2.8
 Tested up to: 2.8.4
-Stable tag: 1.3
+Stable tag: 1.4
 
 Displays most recent posts from a specific featured tag or tags.
 
