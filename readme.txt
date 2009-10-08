@@ -10,7 +10,7 @@ Displays most recent posts from a specific featured tag or tags.
 
 == Description ==
 
-Plugin with multi-widget functionality that displays most recent posts from specific tag or tags (set with user options). Also includes user options to display: Author and meta details; comment totals; post categories; post tags; and either full post or excerpt (or any combination).
+Plugin with multi-widget functionality that displays most recent posts from specific tag or tags (set with user options). Also includes user options to display: Author and meta details; comment totals; post categories; post tags; and either full post, excerpt, or your choice of the amount of words (or any combination).
 
 == Installation ==
 
