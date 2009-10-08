@@ -4,7 +4,7 @@ Donate link: http://buynowshop.com
 Tags: posts, tags, featured, multi-widget, user-options
 Requires at least: 2.8
 Tested up to: 2.8.4
-Stable tag: 1.4
+Stable tag: 1.5
 
 Displays most recent posts from a specific featured tag or tags.
 
@@ -66,6 +66,11 @@ If you wish to increase the total posts displayed by the widget you can increase
 1. The options panel.
 
 == Changelog ==
+
+= 1.5 =
+* added option to set the quantity of the first words of the post to display instead of the default excerpt.
+* modified description to reflect new functionality
+* slightly increased the size of option panel to better display controls
 
 = 1.4 =
 * added version control compared against $wp_version
