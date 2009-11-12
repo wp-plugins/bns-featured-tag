@@ -3,7 +3,7 @@
 Plugin Name: BNS Featured Tag
 Plugin URI: http://buynowshop.com/plugins/bns-featured-tag/
 Description: Plugin with multi-widget functionality that displays most recent posts from specific tag or tags (set with user options). Also includes user options to display: Author and meta details; comment totals; post categories; post tags; and either full post or excerpt (or any combination).  
-Version: 1.5
+Version: 1.5.1
 Author: Edward Caissie
 Author URI: http://edwardcaissie.com/
 */
@@ -174,13 +174,13 @@ class BNS_Featured_Tag_Widget extends WP_Widget {
 			<tr>
 				<td>
 					<p>
-						<input class="checkbox" type="checkbox" <?php checked( $instance['show_meta'], true ); ?> id="<?php echo $this->get_field_id( 'show_meta' ); ?>" name="<?php echo $this->get_field_name( 'show_meta' ); ?>" />
+						<input class="checkbox" type="checkbox" <?php checked( (bool) $instance['show_meta'], true ); ?> id="<?php echo $this->get_field_id( 'show_meta' ); ?>" name="<?php echo $this->get_field_name( 'show_meta' ); ?>" />
 						<label for="<?php echo $this->get_field_id( 'show_meta' ); ?>"><?php _e('Display Author Meta Details?'); ?></label>
 					</p>
 				</td>
 				<td>
 					<p>
-						<input class="checkbox" type="checkbox" <?php checked( $instance['show_comments'], true ); ?> id="<?php echo $this->get_field_id( 'show_comments' ); ?>" name="<?php echo $this->get_field_name( 'show_comments' ); ?>" />
+						<input class="checkbox" type="checkbox" <?php checked( (bool) $instance['show_comments'], true ); ?> id="<?php echo $this->get_field_id( 'show_comments' ); ?>" name="<?php echo $this->get_field_name( 'show_comments' ); ?>" />
 						<label for="<?php echo $this->get_field_id( 'show_comments' ); ?>"><?php _e('Display Comment Totals?'); ?></label>
 					</p>
 				</td>
@@ -188,13 +188,13 @@ class BNS_Featured_Tag_Widget extends WP_Widget {
 			<tr>
 				<td>
 					<p>
-						<input class="checkbox" type="checkbox" <?php checked( $instance['show_cats'], true ); ?> id="<?php echo $this->get_field_id( 'show_cats' ); ?>" name="<?php echo $this->get_field_name( 'show_cats' ); ?>" />
+						<input class="checkbox" type="checkbox" <?php checked( (bool) $instance['show_cats'], true ); ?> id="<?php echo $this->get_field_id( 'show_cats' ); ?>" name="<?php echo $this->get_field_name( 'show_cats' ); ?>" />
 						<label for="<?php echo $this->get_field_id( 'show_cats' ); ?>"><?php _e('Display the Post Categories?'); ?></label>
 					</p>
 				</td>
 				<td>
 					<p>
-						<input class="checkbox" type="checkbox" <?php checked( $instance['show_tags'], true ); ?> id="<?php echo $this->get_field_id( 'show_tags' ); ?>" name="<?php echo $this->get_field_name( 'show_tags' ); ?>" />
+						<input class="checkbox" type="checkbox" <?php checked( (bool) $instance['show_tags'], true ); ?> id="<?php echo $this->get_field_id( 'show_tags' ); ?>" name="<?php echo $this->get_field_name( 'show_tags' ); ?>" />
 						<label for="<?php echo $this->get_field_id( 'show_tags' ); ?>"><?php _e('Display the Post Tags?'); ?></label>
 					</p>
 				</td>
@@ -205,12 +205,12 @@ class BNS_Featured_Tag_Widget extends WP_Widget {
 		<p>The default is to show the excerpt, if it exists, or the first 55 words of the post as the excerpt.</p>
 		
 		<p>
-			<input class="checkbox" type="checkbox" <?php checked( $instance['only_titles'], true ); ?> id="<?php echo $this->get_field_id( 'only_titles' ); ?>" name="<?php echo $this->get_field_name( 'only_titles' ); ?>" />
+			<input class="checkbox" type="checkbox" <?php checked( (bool) $instance['only_titles'], true ); ?> id="<?php echo $this->get_field_id( 'only_titles' ); ?>" name="<?php echo $this->get_field_name( 'only_titles' ); ?>" />
 			<label for="<?php echo $this->get_field_id( 'show_full' ); ?>"><?php _e('Display only the Post Titles?'); ?></label>
 		</p>
 
 		<p>
-			<input class="checkbox" type="checkbox" <?php checked( $instance['show_full'], true ); ?> id="<?php echo $this->get_field_id( 'show_full' ); ?>" name="<?php echo $this->get_field_name( 'show_full' ); ?>" />
+			<input class="checkbox" type="checkbox" <?php checked( (bool) $instance['show_full'], true ); ?> id="<?php echo $this->get_field_id( 'show_full' ); ?>" name="<?php echo $this->get_field_name( 'show_full' ); ?>" />
 			<label for="<?php echo $this->get_field_id( 'show_full' ); ?>"><?php _e('Display entire Post? (defaults to Post excerpt)'); ?></label>
 		</p>
 		
