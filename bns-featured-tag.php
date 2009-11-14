@@ -2,8 +2,8 @@
 /*
 Plugin Name: BNS Featured Tag
 Plugin URI: http://buynowshop.com/plugins/bns-featured-tag/
-Description: Plugin with multi-widget functionality that displays most recent posts from specific tag or tags (set with user options). Also includes user options to display: Author and meta details; comment totals; post categories; post tags; and either full post or excerpt (or any combination).  
-Version: 1.5.1
+Description: Plugin with multi-widget functionality that displays most recent posts from specific tag or tags (set with user options). Also includes user options to display: Tag Description; Author and meta details; comment totals; post categories; post tags; and either full post or excerpt (or any combination).
+Version: 1.6
 Author: Edward Caissie
 Author URI: http://edwardcaissie.com/
 */
@@ -55,16 +55,18 @@ class BNS_Featured_Tag_Widget extends WP_Widget {
 		extract( $args );
 
 		/* User-selected settings. */
-		$title			= apply_filters('widget_title', $instance['title'] );
-		$tag_choice		= $instance['tag_choice'];
-		$show_count		= $instance['show_count'];
-		$show_meta		= $instance['show_meta'];
-		$show_comments	= $instance['show_comments'];
-		$show_cats		= $instance['show_cats'];
-		$show_tags		= $instance['show_tags'];
-		$only_titles	= $instance['only_titles'];		
-		$show_full		= $instance['show_full'];
-		$excerpt_length	= $instance['excerpt_length'];
+		$title          = apply_filters('widget_title', $instance['title'] );
+		$tag_choice     = $instance['tag_choice'];
+		$show_count     = $instance['show_count'];
+		$show_tag_desc  = $instance['show_tag_desc'];
+		$show_meta      = $instance['show_meta'];
+		$show_comments  = $instance['show_comments'];
+		$show_cats		  = $instance['show_cats'];
+		$show_tags		  = $instance['show_tags'];
+		$only_titles    = $instance['only_titles'];
+		$show_full		  = $instance['show_full'];
+		$excerpt_length = $instance['excerpt_length'];
+		$count          = $instance['count']; /* Plugin requires counter variable to be part of its arguments?! */
 		
 		/* Before widget (defined by themes). */
 		echo $before_widget;
@@ -75,8 +77,11 @@ class BNS_Featured_Tag_Widget extends WP_Widget {
 
 		/* Display posts from widget settings. */
 		query_posts("tag=$tag_choice");
+		if ( $show_tag_desc ) {
+		  echo '<div class="bnsfc-tag-desc">' . tag_description() . '</div>';
+		}
 		if (have_posts()) : while (have_posts()) : the_post();
-			static $count = 0;
+		/* static $count = 0; */ /* see above */
 		
 			if ($count == $show_count) {
 				break;
@@ -124,16 +129,18 @@ class BNS_Featured_Tag_Widget extends WP_Widget {
 		$instance = $old_instance;
 
 		/* Strip tags (if needed) and update the widget settings. */
-		$instance['title']			= strip_tags( $new_instance['title'] );
-		$instance['tag_choice']		= strip_tags( $new_instance['tag_choice'] );
-		$instance['show_count']		= strip_tags( $new_instance['show_count'] );
-		$instance['show_meta']		= $new_instance['show_meta'];
+		$instance['title']          = strip_tags( $new_instance['title'] );
+		$instance['tag_choice']	    = strip_tags( $new_instance['tag_choice'] );
+		$instance['show_count']     = strip_tags( $new_instance['show_count'] );
+		$instance['show_tag_desc']  = $new_instance['show_tag_desc'];
+		$instance['show_meta']		  = $new_instance['show_meta'];
 		$instance['show_comments']	= $new_instance['show_comments'];
-		$instance['show_cats']		= $new_instance['show_cats'];
-		$instance['show_tags']		= $new_instance['show_tags'];
-		$instance['only_titles']	= $new_instance['only_titles'];		
-		$instance['show_full']		= $new_instance['show_full'];
-		$instance['excerpt_length']	= $new_instance['excerpt_length'];
+		$instance['show_cats']		  = $new_instance['show_cats'];
+		$instance['show_tags']		  = $new_instance['show_tags'];
+		$instance['only_titles']    = $new_instance['only_titles'];
+		$instance['show_full']		  = $new_instance['show_full'];
+		$instance['excerpt_length'] = $new_instance['excerpt_length'];
+		$instance['count']          = $new_instance['count']; /* added to be able to reset count to zero for every instance of the plugin */
 		
 		return $instance;
 	}
@@ -141,16 +148,18 @@ class BNS_Featured_Tag_Widget extends WP_Widget {
 	function form( $instance ) {
 		/* Set up some default widget settings. */
 		$defaults = array(
-				'title'				=> __('Featured Tag'),
-				'tag_choice'		=> '',
-				'show_count'		=> '3',
-				'show_meta'			=> false,
+				'title'           => __('Featured Tag'),
+				'tag_choice'		  => '',
+				'count'           => '0', /* resets count to zero as default */
+				'show_count'		  => '3',
+				'show_tag_desc'   => false,
+				'show_meta'			  => false,
 				'show_comments'		=> false,
-				'show_cats'			=> false,
-				'show_tags'			=> false,
-				'only_titles'		=> false,      
-				'show_full'			=> false,
-				'excerpt_length'	=> ''
+				'show_cats'			  => false,
+				'show_tags'			  => false,
+				'only_titles'     => false,
+				'show_full'			  => false,
+				'excerpt_length'  => ''
 		);
 		$instance = wp_parse_args( (array) $instance, $defaults );
 		?>
@@ -163,6 +172,11 @@ class BNS_Featured_Tag_Widget extends WP_Widget {
 		<p>
 			<label for="<?php echo $this->get_field_id( 'tag_choice' ); ?>"><?php _e('Tag Names, separated by commas:'); ?></label>
 			<input id="<?php echo $this->get_field_id( 'tag_choice' ); ?>" name="<?php echo $this->get_field_name( 'tag_choice' ); ?>" value="<?php echo $instance['tag_choice']; ?>" style="width:100%;" />
+		</p>
+		
+  	<p>
+				<input class="checkbox" type="checkbox" <?php checked( (bool) $instance['show_tag_desc'], true ); ?> id="<?php echo $this->get_field_id( 'show_tag_desc' ); ?>" name="<?php echo $this->get_field_name( 'show_tag_desc' ); ?>" />
+				<label for="<?php echo $this->get_field_id( 'show_tag_desc' ); ?>"><?php _e('Show first Tag choice description?'); ?></label>
 		</p>
 
 		<p>
@@ -215,9 +229,9 @@ class BNS_Featured_Tag_Widget extends WP_Widget {
 		</p>
 		
 		<p>
-  			<label for="<?php echo $this->get_field_id( 'excerpt_length' ); ?>"><?php _e('Set your preferred value for the amount of words'); ?></label>
-  			<input id="<?php echo $this->get_field_id( 'excerpt_length' ); ?>" name="<?php echo $this->get_field_name( 'excerpt_length' ); ?>" value="<?php echo $instance['excerpt_length']; ?>" style="width:100%;" />
-  		</p>
+  		<label for="<?php echo $this->get_field_id( 'excerpt_length' ); ?>"><?php _e('Set your preferred value for the amount of words'); ?></label>
+  		<input id="<?php echo $this->get_field_id( 'excerpt_length' ); ?>" name="<?php echo $this->get_field_name( 'excerpt_length' ); ?>" value="<?php echo $instance['excerpt_length']; ?>" style="width:100%;" />
+  	</p>
 		<?php
 	}
 }

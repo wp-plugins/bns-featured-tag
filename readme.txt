@@ -3,14 +3,14 @@ Contributors: cais
 Donate link: http://buynowshop.com
 Tags: posts, tags, featured, multi-widget, user-options
 Requires at least: 2.8
-Tested up to: 2.8.4
-Stable tag: 1.5
+Tested up to: 2.9
+Stable tag: 1.6
 
 Displays most recent posts from a specific featured tag or tags.
 
 == Description ==
 
-Plugin with multi-widget functionality that displays most recent posts from specific tag or tags (set with user options). Also includes user options to display: Author and meta details; comment totals; post categories; post tags; and either full post, excerpt, or your choice of the amount of words (or any combination).
+Plugin with multi-widget functionality that displays most recent posts from specific tag or tags (set with user options). Also includes user options to display: Tag Description; Author and meta details; comment totals; post categories; post tags; and either full post, excerpt, or your choice of the amount of words (or any combination).
 
 == Installation ==
 
@@ -22,6 +22,7 @@ This section describes how to install the plugin and get it working.
 4. Set options to personal preferences:
 * Widget Title
 * Tag Names - separated by commas
+* Show (first) Tag Description (checkbox)
 * Show Author and date/time details of post (checkbox)
 * Show all categories attached to post (checkbox)
 * Show all tags attached to post (checkbox)
@@ -38,6 +39,7 @@ This section describes how to install the plugin and get it working.
 7. Set options to personal preferences:
 * Widget Title
 * Tag Names - separated by commas
+* Show (first) Tag Description (checkbox)
 * Show Author and date/time details of post (checkbox)
 * Show all categories attached to post (checkbox)
 * Show all tags attached to post (checkbox)
@@ -56,16 +58,27 @@ The plugin uses several "common" WordPress functions that create standard class 
 * the plugin class `post-details` wraps the general meta details of the post, such as the Author, Categories, Tags, etc.
 * the overall plugin may also be wrapped in a widget "container" class, or id, specific to the theme itself such as (but not limited to): widget, sidebar, left, right, etc.
 
+With the addition of the display Tag Description option an additional class was written into the plugin. To style the tag description displayed add the class 'bnsfc-tag-desc' to your style.css file then use your choice of properties to style the text, for example:
+`
+.bnsfc-tag-desc {font-style: italic;}
+`
+
 = Can I increase the maximum posts to display? =
 
 The maximum posts displayed by the widget is controlled by the "posts per page" setting as set under Settings | Reading.
-If you wish to increase the total posts displayed by the widget you can increase this number but it will also increase the number of posts displayed by the Loop routine(s).
+If you wish to increase the total posts displayed by the widget you can increase this number but it will also increase the number of posts displayed by the Loop routine(s). NB: This is still under review for future updates.
 
 == Screenshots ==
 
-1. The options panel.
+1. The options panel (default settings).
 
 == Changelog ==
+
+= 1.6 =
+* corrected issue with checkboxes not displaying their state correctly
+* minor correction to variable structure to allow for multiple instances of the plugin with independent post counts
+* added option to display the description for the (first) tag choice as taken directly from the Tags panel under Posts in the Dashboard
+* wrapped Tag Description in its own class: 'bnsfc-tag-desc'
 
 = 1.5 =
 * added option to set the quantity of the first words of the post to display instead of the default excerpt.
