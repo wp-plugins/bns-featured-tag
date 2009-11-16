@@ -3,7 +3,7 @@
 Plugin Name: BNS Featured Tag
 Plugin URI: http://buynowshop.com/plugins/bns-featured-tag/
 Description: Plugin with multi-widget functionality that displays most recent posts from specific tag or tags (set with user options). Also includes user options to display: Tag Description; Author and meta details; comment totals; post categories; post tags; and either full post or excerpt (or any combination).
-Version: 1.6
+Version: 1.6.2
 Author: Edward Caissie
 Author URI: http://edwardcaissie.com/
 */
@@ -76,7 +76,7 @@ class BNS_Featured_Tag_Widget extends WP_Widget {
 			echo $before_title . $title . $after_title;
 
 		/* Display posts from widget settings. */
-		query_posts("tag=$tag_choice");
+		query_posts("tag=$tag_choice&posts_per_page=$show_count");
 		if ( $show_tag_desc ) {
 		  echo '<div class="bnsfc-tag-desc">' . tag_description() . '</div>';
 		}
@@ -180,7 +180,7 @@ class BNS_Featured_Tag_Widget extends WP_Widget {
 		</p>
 
 		<p>
-			<label for="<?php echo $this->get_field_id( 'show_count' ); ?>"><?php _e('Total Posts to Display (maximum'); ?> <?php echo $num_posts . '):'; ?></label>
+			<label for="<?php echo $this->get_field_id( 'show_count' ); ?>"><?php _e('Total Posts to Display:'); ?></label>
 			<input id="<?php echo $this->get_field_id( 'show_count' ); ?>" name="<?php echo $this->get_field_name( 'show_count' ); ?>" value="<?php echo $instance['show_count']; ?>" style="width:100%;" />
 		</p>
 

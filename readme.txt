@@ -4,7 +4,7 @@ Donate link: http://buynowshop.com
 Tags: posts, tags, featured, multi-widget, user-options
 Requires at least: 2.8
 Tested up to: 2.9
-Stable tag: 1.6
+Stable tag: 1.6.2
 
 Displays most recent posts from a specific featured tag or tags.
 
@@ -65,14 +65,17 @@ With the addition of the display Tag Description option an additional class was 
 
 = Can I increase the maximum posts to display? =
 
-The maximum posts displayed by the widget is controlled by the "posts per page" setting as set under Settings | Reading.
-If you wish to increase the total posts displayed by the widget you can increase this number but it will also increase the number of posts displayed by the Loop routine(s). NB: This is still under review for future updates.
+As of version 1.6.2 the Total Posts to Display is independent of the "posts per page" setting as set under Settings | Reading.
 
 == Screenshots ==
 
 1. The options panel (default settings).
 
 == Changelog ==
+
+= 1.6.2 =
+* Total Posts to Display can now exceed the posts_per_page option value.
+* matched version number to BNS Featured Category - future versions should also stay in step
 
 = 1.6 =
 * corrected issue with checkboxes not displaying their state correctly
