@@ -3,8 +3,8 @@ Contributors: cais
 Donate link: http://buynowshop.com
 Tags: posts, tags, featured, multi-widget, user-options
 Requires at least: 2.8
-Tested up to: 2.9
-Stable tag: 1.6.2
+Tested up to: 2.9.1
+Stable tag: 1.6.2.1
 
 Displays most recent posts from a specific featured tag or tags.
 
@@ -72,6 +72,8 @@ As of version 1.6.2 the Total Posts to Display is independent of the "posts per 
 1. The options panel (default settings).
 
 == Changelog ==
+= 1.6.2.1 =
+* compatibility check for 2.9.1 completed
 
 = 1.6.2 =
 * Total Posts to Display can now exceed the posts_per_page option value.
