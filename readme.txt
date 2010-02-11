@@ -4,7 +4,7 @@ Donate link: http://buynowshop.com
 Tags: posts, tags, featured, multi-widget, user-options
 Requires at least: 2.8
 Tested up to: 2.9.1
-Stable tag: 1.6.2.1
+Stable tag: 1.6.2.2
 
 Displays most recent posts from a specific featured tag or tags.
 
@@ -68,10 +68,24 @@ With the addition of the display Tag Description option an additional class was 
 As of version 1.6.2 the Total Posts to Display is independent of the "posts per page" setting as set under Settings | Reading.
 
 == Screenshots ==
-
 1. The options panel (default settings).
 
+== Other Notes ==
+* Copyright 2009, 2010 Edward Caissie 
+
+This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 2 of the License, or (at your option) any later version.
+ 
+This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+ 
+You should have received a copy of the GNU General Public License along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+== Upgrade Notice ==
+Please stay current with your WordPress installation, your active theme, and your plugins.
+
 == Changelog ==
+= 1.6.2.2 =
+* clarified the plugin's release under a GPL license
+
 = 1.6.2.1 =
 * compatibility check for 2.9.1 completed
 
