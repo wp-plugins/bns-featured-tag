@@ -3,17 +3,19 @@
 Plugin Name: BNS Featured Tag
 Plugin URI: http://buynowshop.com/plugins/bns-featured-tag/
 Description: Plugin with multi-widget functionality that displays most recent posts from specific tag or tags (set with user options). Also includes user options to display: Tag Description; Author and meta details; comment totals; post categories; post tags; and either full post or excerpt (or any combination).
-Version: 1.6.2.3
+Version: 1.7
 Author: Edward Caissie
 Author URI: http://edwardcaissie.com/
 License: GPL2
 */
 
-/*  Copyright 2009, 2010  Edward Caissie  (email : edward.caissie@gmail.com)
+/*  Copyright 2009-2010  Edward Caissie  (email : edward.caissie@gmail.com)
 
     This program is free software; you can redistribute it and/or modify
-    it under the terms of the GNU General Public License, version 2, as
-    published by the Free Software Foundation.
+    it under the terms of the GNU General Public License version 2,
+    as published by the Free Software Foundation.
+
+    You may NOT assume that you can use any other version of the GPL.
 
     This program is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -23,6 +25,9 @@ License: GPL2
     You should have received a copy of the GNU General Public License
     along with this program; if not, write to the Free Software
     Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
+
+    The license for this software can also likely be found here:
+    http://www.gnu.org/licenses/gpl-2.0.html
 */
 
 global $wp_version;
@@ -103,7 +108,7 @@ class BNS_Featured_Tag_Widget extends WP_Widget {
 			if ($count == $show_count) {
 				break;
 			} else { ?>
-				<div <?php post_class(); ?> id="post-<?php the_ID(); ?>">
+				<div <?php post_class(); ?>>
 					<strong><a href="<?php the_permalink() ?>" rel="bookmark" title="<?php _e('Permanent Link to'); ?> <?php the_title_attribute(); ?>"><?php the_title(); ?></a></strong>
 					<div class="post-details">
 						<?php if ( $show_meta ) {  
