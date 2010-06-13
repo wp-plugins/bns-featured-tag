@@ -4,7 +4,7 @@ Donate link: http://buynowshop.com
 Tags: posts, tags, featured, multi-widget, user-options
 Requires at least: 2.8
 Tested up to: 3.0
-Stable tag: 1.7
+Stable tag: 1.7.1
 
 Displays most recent posts from a specific featured tag or tags.
 
@@ -97,6 +97,11 @@ As of version 1.6.2 the Total Posts to Display is independent of the "posts per 
 Please stay current with your WordPress installation, your active theme, and your plugins.
 
 == Changelog ==
+= 1.7.1 =
+* released: June 13, 2010
+* format tag names into tag slugs for use in the query (needs to be further addressed)
+* cleaned up code to meet WP Standards
+
 = 1.7 =
 * compatible with WordPress version 3.0
 * updated license declaration
