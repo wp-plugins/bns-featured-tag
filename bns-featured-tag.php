@@ -3,13 +3,13 @@
 Plugin Name: BNS Featured Tag
 Plugin URI: http://buynowshop.com/plugins/bns-featured-tag/
 Description: Plugin with multi-widget functionality that displays most recent posts from specific tag or tags (set with user options). Also includes user options to display: Tag Description; Author and meta details; comment totals; post categories; post tags; and either full post or excerpt (or any combination).
-Version: 1.7.1
+Version: 1.7.2
 Author: Edward Caissie
 Author URI: http://edwardcaissie.com/
 License: GPL2
 */
 
-/* Release Date: June 13, 2010 */
+/* Release Date: July 5, 2010 */
 
 /*  Copyright 2009-2010  Edward Caissie  (email : edward.caissie@gmail.com)
 
@@ -146,6 +146,7 @@ class BNS_Featured_Tag_Widget extends WP_Widget {
 		endif;
 		/* After widget (defined by themes). */
 		echo $after_widget;
+		wp_reset_query();
 	}
 
 	function update( $new_instance, $old_instance ) {
@@ -259,3 +260,4 @@ class BNS_Featured_Tag_Widget extends WP_Widget {
 	}
 }
 ?>
+<?php /* Last Revision: July 15, 2010 v1.7.2 */ ?>
