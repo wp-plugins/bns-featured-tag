@@ -3,8 +3,8 @@ Contributors: cais
 Donate link: http://buynowshop.com
 Tags: posts, tags, featured, multi-widget, user-options
 Requires at least: 2.9
-Tested up to: 3.0
-Stable tag: 1.8
+Tested up to: 3.0.1
+Stable tag: 1.8.1
 
 Displays most recent posts from a specific featured tag or tags.
 
@@ -79,9 +79,9 @@ The plugin uses several "common" WordPress functions that create standard class 
 * the plugin class `post-details` wraps the general meta details of the post, such as the Author, Categories, Tags, etc.
 * the overall plugin may also be wrapped in a widget "container" class, or id, specific to the theme itself such as (but not limited to): widget, sidebar, left, right, etc.
 
-With the addition of the display Tag Description option an additional class was written into the plugin. To style the tag description displayed add the class 'bnsfc-tag-desc' to your style.css file then use your choice of properties to style the text, for example:
+With the addition of the display Tag Description option an additional class was written into the plugin. To style the tag description displayed add the class 'bnsft-tag-desc' to your style.css file then use your choice of properties to style the text, for example:
 `
-.bnsfc-tag-desc {font-style: italic;}
+.bnsft-tag-desc {font-style: italic;}
 `
 
 = Can I increase the maximum posts to display? =
@@ -92,7 +92,7 @@ As of version 1.6.2 the Total Posts to Display is independent of the "posts per 
 1. The options panel (default settings).
 
 == Other Notes ==
-* Copyright 2009-2010  Edward Caissie  (email : edward.caissie@gmail.com)
+  Copyright 2009-2010  Edward Caissie  (email : edward.caissie@gmail.com)
 
   This program is free software; you can redistribute it and/or modify
   it under the terms of the GNU General Public License version 2,
@@ -116,9 +116,14 @@ As of version 1.6.2 the Total Posts to Display is independent of the "posts per 
 Please stay current with your WordPress installation, your active theme, and your plugins.
 
 == Changelog ==
+= 1.8.1 =
+* Fix typo and other minor items in readme.txt file
+* Update internal 'Release Date' comment
+
 = 1.8 =
 * released: October 3, 2010
 * added post_thumbnail support
+* added shortcode support (`bnsft`)
 * version requirements changed appropriately to minimum WordPress version 2.9
 
 = 1.7.2 =

@@ -9,7 +9,7 @@ Author URI: http://edwardcaissie.com/
 License: GPL2
 */
 
-/* Release Date: Sept 28, 2010 */
+/* Release Date: October 3, 2010 */
 
 /*  Copyright 2009-2010  Edward Caissie  (email : edward.caissie@gmail.com)
 
