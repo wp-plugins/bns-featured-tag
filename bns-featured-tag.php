@@ -3,13 +3,14 @@
 Plugin Name: BNS Featured Tag
 Plugin URI: http://buynowshop.com/plugins/bns-featured-tag/
 Description: Plugin with multi-widget functionality that displays most recent posts from specific tag or tags (set with user options). Also includes user options to display: Tag Description; Author and meta details; comment totals; post categories; post tags; and either full post or excerpt (or any combination).
-Version: 1.8.2
+Version: 1.8.3
 Author: Edward Caissie
 Author URI: http://edwardcaissie.com/
-License: GPL2
+License: GNU General Public License v2
+License URI: http://www.gnu.org/licenses/old-licenses/gpl-2.0.html
 */
 
-/* Release Date: October 3, 2010 */
+/* Last Updated: December 12, 2010 v1.8.3 */
 
 /*  Copyright 2009-2010  Edward Caissie  (email : edward.caissie@gmail.com)
 
@@ -117,9 +118,9 @@ class BNS_Featured_Tag_Widget extends WP_Widget {
 					<strong><a href="<?php the_permalink() ?>" rel="bookmark" title="<?php _e( 'Permanent Link to' ); ?> <?php the_title_attribute(); ?>"><?php the_title(); ?></a></strong>
 					<div class="post-details">
 						<?php if ( $show_meta ) {  
-							_e( 'by ' ); the_author(); _e( ' on ' ); the_time( 'M j, Y' ); ?><br />
+							_e( 'by ' ); the_author(); _e( ' on ' ); the_time( get_option( 'date_format' ) ); ?><br />
 						<?php }
-						if ( $show_comments ) {         
+						if ( ( $show_comments ) && ( ! post_password_required() ) ) {         
 							_e( 'with ' ); comments_popup_link( __( 'No Comments' ), __( '1 Comment' ), __( '% Comments' ), '', __( 'Comments Closed' ) ); ?><br />
 						<?php } 
 						if ( $show_cats ) { 
@@ -338,4 +339,4 @@ add_shortcode( 'bnsft', 'bnsft_shortcode' );
 /* BNSFT Shortcode End - Say your prayers ... */
 
 ?>
-<?php /* Last Revision: October 3, 2010 v1.8.1 */ ?>
+<?php /* Last Revision: December 11, 2010 v1.8.3 */ ?>
