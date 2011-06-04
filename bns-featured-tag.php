@@ -3,14 +3,14 @@
 Plugin Name: BNS Featured Tag
 Plugin URI: http://buynowshop.com/plugins/bns-featured-tag/
 Description: Plugin with multi-widget functionality that displays most recent posts from specific tag or tags (set with user options). Also includes user options to display: Tag Description; Author and meta details; comment totals; post categories; post tags; and either full post or excerpt (or any combination).
-Version: 1.8.4
+Version: 1.8.5
 Author: Edward Caissie
 Author URI: http://edwardcaissie.com/
 License: GNU General Public License v2
 License URI: http://www.gnu.org/licenses/old-licenses/gpl-2.0.html
 */
 
-/* Last Updated: May 29, 2011 v1.8.4 */
+/* Last updated June 4, 2011 v1.8.5 */
 
 /*  Copyright 2009-2011  Edward Caissie  (email : edward.caissie@gmail.com)
 
@@ -70,7 +70,7 @@ class BNS_Featured_Tag_Widget extends WP_Widget {
 		$widget_ops = array( 'classname' => 'bns-featured-tag', 'description' => __( 'Displays most recent posts from a specific featured tag or tags.' ) );
 
 		/* Widget control settings. */
-		$control_ops = array( 'width' => 450, 'height' => 350, 'id_base' => 'bns-featured-tag' );
+		$control_ops = array( 'width' => 200, 'id_base' => 'bns-featured-tag' );
 
 		/* Create the widget. */
 		$this->WP_Widget( 'bns-featured-tag', 'BNS Featured Tag', $widget_ops, $control_ops );
@@ -100,11 +100,14 @@ class BNS_Featured_Tag_Widget extends WP_Widget {
 		/* Title of widget (before and after defined by themes). */
 		if ( $title )
 			echo $before_title . $title . $after_title;
+			
 		/* Display posts from widget settings. */
 		/* Replace spaces with hyphens to create tag slugs from the name */
 		$tag_choice = str_replace( ' ', '-', $tag_choice );
+		
 		/* Remove leading hyphens from tag slugs if multiple tag names are entered with leading spaces */
 		$tag_choice = str_replace( ',-', ', ', $tag_choice );
+		
 		query_posts( "tag=$tag_choice&posts_per_page=$show_count" );
 		if ( $show_tag_desc ) {
 		  echo '<div class="bnsft-tag-desc">' . tag_description() . '</div>';
@@ -157,6 +160,7 @@ class BNS_Featured_Tag_Widget extends WP_Widget {
 		else :
 			_e( 'Yes, we have no bananas, or posts, today.' );
 		endif;
+		
 		/* After widget (defined by themes). */
 		echo $after_widget;
 		wp_reset_query();
@@ -204,17 +208,23 @@ class BNS_Featured_Tag_Widget extends WP_Widget {
 				'show_full'       => false,
 				'excerpt_length'	=> ''
 				);
+				
 		$instance = wp_parse_args( ( array ) $instance, $defaults );
 		?>
 		
 		<p>
 			<label for="<?php echo $this->get_field_id( 'title' ); ?>"><?php _e( 'Title:' ); ?></label>
-			<input id="<?php echo $this->get_field_id( 'title' ); ?>" name="<?php echo $this->get_field_name( 'title' ); ?>" value="<?php echo $instance['title']; ?>" style="width:100%;" />
+			<input class="widefat" id="<?php echo $this->get_field_id( 'title' ); ?>" name="<?php echo $this->get_field_name( 'title' ); ?>" value="<?php echo $instance['title']; ?>" />
 		</p>
 		
 		<p>
 			<label for="<?php echo $this->get_field_id( 'tag_choice' ); ?>"><?php _e( 'Tag Names, separated by commas:' ); ?></label>
-			<input id="<?php echo $this->get_field_id( 'tag_choice' ); ?>" name="<?php echo $this->get_field_name( 'tag_choice' ); ?>" value="<?php echo $instance['tag_choice']; ?>" style="width:100%;" />
+			<input class="widefat" id="<?php echo $this->get_field_id( 'tag_choice' ); ?>" name="<?php echo $this->get_field_name( 'tag_choice' ); ?>" value="<?php echo $instance['tag_choice']; ?>" />
+		</p>
+
+		<p>
+			<input class="checkbox" type="checkbox" <?php checked( (bool) $instance['show_tag_desc'], true ); ?> id="<?php echo $this->get_field_id( 'show_tag_desc' ); ?>" name="<?php echo $this->get_field_name( 'show_tag_desc' ); ?>" />
+			<label for="<?php echo $this->get_field_id( 'show_tag_desc' ); ?>"><?php _e( 'Show first Tag choice description?' ); ?></label>
 		</p>
 		
 		<p>
@@ -222,31 +232,19 @@ class BNS_Featured_Tag_Widget extends WP_Widget {
 			<label for="<?php echo $this->get_field_id( 'use_thumbnails' ); ?>"><?php _e('Use Featured Image / Post Thumbnails?'); ?></label>
 		</p>
     
-		<table width="100%">
-		  <tr>
-		    <td>
-		      <p>
+    <p>
 			<label for="<?php echo $this->get_field_id( 'content_thumb' ); ?>"><?php _e('Content Thumbnail Size (in px):'); ?></label>
-			<input id="<?php echo $this->get_field_id( 'content_thumb' ); ?>" name="<?php echo $this->get_field_name( 'content_thumb' ); ?>" value="<?php echo $instance['content_thumb']; ?>" style="width:85%;" />
-		      </p>
-		    </td>
-		    <td>  		
-		      <p>
+			<input class="widefat" id="<?php echo $this->get_field_id( 'content_thumb' ); ?>" name="<?php echo $this->get_field_name( 'content_thumb' ); ?>" value="<?php echo $instance['content_thumb']; ?>" />
+    </p>
+
+    <p>
 			<label for="<?php echo $this->get_field_id( 'excerpt_thumb' ); ?>"><?php _e('Excerpt Thumbnail Size (in px):'); ?></label>
-			<input id="<?php echo $this->get_field_id( 'excerpt_thumb' ); ?>" name="<?php echo $this->get_field_name( 'excerpt_thumb' ); ?>" value="<?php echo $instance['excerpt_thumb']; ?>" style="width:85%;" />
-		      </p>
-		    </td>
-		  </tr>
-		</table>
-		
-		<p>
-			<input class="checkbox" type="checkbox" <?php checked( (bool) $instance['show_tag_desc'], true ); ?> id="<?php echo $this->get_field_id( 'show_tag_desc' ); ?>" name="<?php echo $this->get_field_name( 'show_tag_desc' ); ?>" />
-			<label for="<?php echo $this->get_field_id( 'show_tag_desc' ); ?>"><?php _e( 'Show first Tag choice description?' ); ?></label>
-		</p>
+			<input class="widefat" id="<?php echo $this->get_field_id( 'excerpt_thumb' ); ?>" name="<?php echo $this->get_field_name( 'excerpt_thumb' ); ?>" value="<?php echo $instance['excerpt_thumb']; ?>" />
+    </p>
 		
 		<p>
 			<label for="<?php echo $this->get_field_id( 'show_count' ); ?>"><?php _e( 'Total Posts to Display:' ); ?></label>
-			<input id="<?php echo $this->get_field_id( 'show_count' ); ?>" name="<?php echo $this->get_field_name( 'show_count' ); ?>" value="<?php echo $instance['show_count']; ?>" style="width:100%;" />
+			<input class="widefat" id="<?php echo $this->get_field_id( 'show_count' ); ?>" name="<?php echo $this->get_field_name( 'show_count' ); ?>" value="<?php echo $instance['show_count']; ?>" />
 		</p>
 		
 		<table width="100%">
@@ -281,22 +279,23 @@ class BNS_Featured_Tag_Widget extends WP_Widget {
 		</table>
 		
 		<hr /> <!-- separates meta details display from content/excerpt display options -->
-		<p>The default is to show the excerpt, if it exists, or the first 55 words of the post as the excerpt.</p>
+		<p>The excerpt is shown by default; or, the first 55 words if it does not exist.</p>
+		
+		<p>
+			<label for="<?php echo $this->get_field_id( 'excerpt_length' ); ?>"><?php _e( 'Set your word count if you want more of less than 55.' ); ?></label>
+			<input class="widefat" id="<?php echo $this->get_field_id( 'excerpt_length' ); ?>" name="<?php echo $this->get_field_name( 'excerpt_length' ); ?>" value="<?php echo $instance['excerpt_length']; ?>" />
+		</p>
 		
 		<p>
 			<input class="checkbox" type="checkbox" <?php checked( ( bool ) $instance['only_titles'], true ); ?> id="<?php echo $this->get_field_id( 'only_titles' ); ?>" name="<?php echo $this->get_field_name( 'only_titles' ); ?>" />
-			<label for="<?php echo $this->get_field_id( 'show_full' ); ?>"><?php _e( 'Display only the Post Titles?' ); ?></label>
+			<label for="<?php echo $this->get_field_id( 'show_full' ); ?>"><?php _e( 'Display only post Titles?' ); ?></label>
 		</p>
 		
 		<p>
 			<input class="checkbox" type="checkbox" <?php checked( ( bool ) $instance['show_full'], true ); ?> id="<?php echo $this->get_field_id( 'show_full' ); ?>" name="<?php echo $this->get_field_name( 'show_full' ); ?>" />
-			<label for="<?php echo $this->get_field_id( 'show_full' ); ?>"><?php _e( 'Display entire Post? (defaults to Post excerpt)' ); ?></label>
+			<label for="<?php echo $this->get_field_id( 'show_full' ); ?>"><?php _e( 'Display entire post?' ); ?></label>
 		</p>
 		
-		<p>
-			<label for="<?php echo $this->get_field_id( 'excerpt_length' ); ?>"><?php _e( 'Set your preferred value for the amount of words' ); ?></label>
-			<input id="<?php echo $this->get_field_id( 'excerpt_length' ); ?>" name="<?php echo $this->get_field_name( 'excerpt_length' ); ?>" value="<?php echo $instance['excerpt_length']; ?>" style="width:100%;" />
-		</p>
 		<?php
 	}
 }
@@ -337,6 +336,4 @@ function bnsft_shortcode( $atts ) {
 }  
 add_shortcode( 'bnsft', 'bnsft_shortcode' );
 /* BNSFT Shortcode End - Say your prayers ... */
-
 ?>
-<?php /* Last Revision: May 29, 2011 v1.8.4 */ ?>
