@@ -3,8 +3,8 @@ Contributors: cais
 Donate link: http://buynowshop.com
 Tags: posts, tags, featured, multi-widget, user-options
 Requires at least: 2.9
-Tested up to: 3.1
-Stable tag: 1.8.3
+Tested up to: 3.2
+Stable tag: 1.8.4
 
 Displays most recent posts from a specific featured tag or tags.
 
@@ -68,6 +68,10 @@ Reading this article for further assistance: http://wpfirstaid.com/2009/12/plugi
 
 == Frequently Asked Questions ==
 
+= Where can I get support for this plugin? =
+
+Please note, support may be available on the WordPress Support forums; but, it may be faster to visit http://buynowshop.com/plugins/bns-featured-tag/ and leave a comment with the issue you are experiencing.
+
 = Can I use this in more than one widget area? =
 
 Yes, this plugin has been made for multi-widget compatibility. Each instance of the widget will display, if wanted, differently than every other instance of the widget.
@@ -116,6 +120,13 @@ As of version 1.6.2 the Total Posts to Display is independent of the "posts per 
 Please stay current with your WordPress installation, your active theme, and your plugins.
 
 == Changelog ==
+= 1.8.4 =
+* released May 2011
+* confirmed compatible with WordPress version 3.2
+* addressed some minor items in the readme (this file)
+* cleaned up some text strings in the code
+* minor variable changes - `load_bnsft_widget()`, `bnsft_first_words()`
+
 = 1.8.3 =
 * Confirm compatible with WordPress 3.1 (beta)
 * Change 'the_time' to date-format option

@@ -3,16 +3,16 @@
 Plugin Name: BNS Featured Tag
 Plugin URI: http://buynowshop.com/plugins/bns-featured-tag/
 Description: Plugin with multi-widget functionality that displays most recent posts from specific tag or tags (set with user options). Also includes user options to display: Tag Description; Author and meta details; comment totals; post categories; post tags; and either full post or excerpt (or any combination).
-Version: 1.8.3
+Version: 1.8.4
 Author: Edward Caissie
 Author URI: http://edwardcaissie.com/
 License: GNU General Public License v2
 License URI: http://www.gnu.org/licenses/old-licenses/gpl-2.0.html
 */
 
-/* Last Updated: December 12, 2010 v1.8.3 */
+/* Last Updated: May 29, 2011 v1.8.4 */
 
-/*  Copyright 2009-2010  Edward Caissie  (email : edward.caissie@gmail.com)
+/*  Copyright 2009-2011  Edward Caissie  (email : edward.caissie@gmail.com)
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License version 2,
@@ -40,15 +40,15 @@ if ( version_compare( $wp_version, "2.9", "<") ) {
 }
 
 /* Add our function to the widgets_init hook. */
-add_action( 'widgets_init', 'load_bns_featured_tag_widget' );
+add_action( 'widgets_init', 'load_bnsft_widget' );
 
 /* Function that registers our widget. */
-function load_bns_featured_tag_widget() {
+function load_bnsft_widget() {
 	register_widget( 'BNS_Featured_Tag_Widget' );
 }
 
 // Begin the mess of Excerpt Length fiascoes
-function get_first_words_for_bns_ft( $text, $length = 55 ) {
+function bnsft_first_words( $text, $length = 55 ) {
 	if ( !$length )
 		return $text;
 		
@@ -118,13 +118,13 @@ class BNS_Featured_Tag_Widget extends WP_Widget {
 					<strong><a href="<?php the_permalink() ?>" rel="bookmark" title="<?php _e( 'Permanent Link to' ); ?> <?php the_title_attribute(); ?>"><?php the_title(); ?></a></strong>
 					<div class="post-details">
 						<?php if ( $show_meta ) {  
-							_e( 'by ' ); the_author(); _e( ' on ' ); the_time( get_option( 'date_format' ) ); ?><br />
+							printf( __( 'by %1$s on %2$s' ), get_the_author(), get_the_time( get_option( 'date_format' ) ) ); ?><br />
 						<?php }
 						if ( ( $show_comments ) && ( ! post_password_required() ) ) {         
-							_e( 'with ' ); comments_popup_link( __( 'No Comments' ), __( '1 Comment' ), __( '% Comments' ), '', __( 'Comments Closed' ) ); ?><br />
+							comments_popup_link( __( 'with No Comments' ), __( 'with 1 Comment' ), __( 'with % Comments' ), '', __( 'with Comments Closed' ) ); ?><br />
 						<?php } 
 						if ( $show_cats ) { 
-							_e( 'in ' ); the_category( ', ' ); ?><br />
+							printf( __( 'in %s' ), get_the_category_list( ', ' ) ); ?><br />
 						<?php } 
 						if ( $show_tags ) { 
 							the_tags( __( 'as ' ), ', ', '' ); ?><br />
@@ -141,7 +141,7 @@ class BNS_Featured_Tag_Widget extends WP_Widget {
 								if ( has_post_thumbnail() && ( $use_thumbnails ) ) {
 									the_post_thumbnail( array( $excerpt_thumb, $excerpt_thumb ) , array( 'class' => 'alignleft' ) );
 									}
-								echo get_first_words_for_bns_ft( get_the_content(), $instance['excerpt_length'] );
+								echo bnsft_first_words( get_the_content(), $instance['excerpt_length'] );
 							} else {
 								if ( has_post_thumbnail() && ( $use_thumbnails ) ) {
 									the_post_thumbnail( array( $excerpt_thumb, $excerpt_thumb ) , array( 'class' => 'alignleft' ) );
@@ -339,4 +339,4 @@ add_shortcode( 'bnsft', 'bnsft_shortcode' );
 /* BNSFT Shortcode End - Say your prayers ... */
 
 ?>
-<?php /* Last Revision: December 11, 2010 v1.8.3 */ ?>
+<?php /* Last Revision: May 29, 2011 v1.8.4 */ ?>
