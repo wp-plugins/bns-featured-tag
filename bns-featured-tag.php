@@ -3,7 +3,7 @@
 Plugin Name: BNS Featured Tag
 Plugin URI: http://buynowshop.com/plugins/bns-featured-tag/
 Description: Plugin with multi-widget functionality that displays most recent posts from specific tag or tags (set with user options). Also includes user options to display: Tag Description; Author and meta details; comment totals; post categories; post tags; and either full post or excerpt (or any combination).
-Version: 1.9
+Version: 1.9.1
 Author: Edward Caissie
 Author URI: http://edwardcaissie.com/
 License: GNU General Public License v2
@@ -22,7 +22,7 @@ License URI: http://www.gnu.org/licenses/old-licenses/gpl-2.0.html
  * @link        http://buynowshop.com/plugins/bns-featured-tag/
  * @link        https://github.com/Cais/bns-featured-tag/
  * @link        http://wordpress.org/extend/plugins/bns-featured-tag/
- * @version     1.9
+ * @version     1.9.1
  * @author      Edward Caissie <edward.caissie@gmail.com>
  * @copyright   Copyright (c) 2009-2011, Edward Caissie
  *
@@ -46,7 +46,7 @@ License URI: http://www.gnu.org/licenses/old-licenses/gpl-2.0.html
  * The license for this software can also likely be found here:
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
- * Last revised November 9, 2011
+ * Last revised December 14, 2011
  */
 
 /** Check if current WordPress version meets the plugin requirements */
@@ -112,12 +112,18 @@ function bnsft_custom_excerpt( $text, $length = 55 ) {
  *
  * @package BNS_Featured_Tag
  * @since   1.9
+ *
+ * Last revised December 14, 2011
+ * @version 1.9.1
+ * Fixed 404 error when 'bnsft-custom-style.css' is not available
  */
 function BNSFT_Scripts_and_Styles() {
         /** Enqueue Scripts */
-        /** Enqueue Style Sheets */
-        wp_enqueue_style( 'BNSFT-Style', plugin_dir_url( __FILE__ ) . '/bnsft-style.css', array(), '1.9', 'screen' );
-        wp_enqueue_style( 'BNSFT-Custom-Style', plugin_dir_url( __FILE__ ) . '/bnsft-custom-style.css', array(), '1.9', 'screen' );
+        /** Enqueue Styles */
+        wp_enqueue_style( 'BNSFT-Style', plugin_dir_url( __FILE__ ) . 'bnsft-style.css', array(), '1.9.1', 'screen' );
+        if ( is_readable( plugin_dir_path( __FILE__ ) . 'bnsft-custom-style.css' ) ) {
+            wp_enqueue_style( 'BNSFT-Custom-Style', plugin_dir_url( __FILE__ ) . 'bnsft-custom-style.css', array(), '1.9.1', 'screen' );
+        }
 }
 add_action( 'wp_enqueue_scripts', 'BNSFT_Scripts_and_Styles' );
 
@@ -389,7 +395,7 @@ function bnsft_shortcode( $atts ) {
                                                 'count'             => '0',
                                                 'show_count'        => '3',
                                                 'use_thumbnails'    => true,
-                                                // 'content_thumb'  => '100',
+                                                'content_thumb'  => '100',
                                                 'excerpt_thumb'     => '50',
                                                 'show_tag_desc'     => false,
                                                 'show_meta'         => false,
@@ -397,7 +403,7 @@ function bnsft_shortcode( $atts ) {
                                                 'show_cats'         => false,
                                                 'show_tags'         => false,
                                                 'only_titles'       => false,
-                                                // 'show_full'      => false,
+                                                'show_full'      => false,
                                                 'excerpt_length'    => ''
                                             ), $atts),
                 $args = array(
