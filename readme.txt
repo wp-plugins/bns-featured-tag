@@ -3,8 +3,10 @@ Contributors: cais
 Donate link: http://buynowshop.com
 Tags: posts, tags, featured, multi-widget, user-options
 Requires at least: 2.9
-Tested up to: 3.4
-Stable tag: 1.9.2
+Tested up to: 3.4.1
+Stable tag: 2.0
+License: GNU General Public License v2
+License URI: http://www.gnu.org/licenses/old-licenses/gpl-2.0.html
 
 Displays most recent posts from a specific featured tag or tags.
 
@@ -52,19 +54,20 @@ Reading this article for further assistance: http://wpfirstaid.com/2009/12/plugi
 = Shortcode: bnsft =
  Default Parameters:
 
-*   'title'          => 'Featured Tag'
-*   'tag_choice'     => ''
-*   'count'          => '0'
-*   'show_count'     => '3'
-*   'use_thumbnails' => true
-*   'excerpt_thumb'  => '50'
-*   'show_tag_desc'  => false
-*   'show_meta'      => false
-*   'show_comments'  => false
-*   'show_cats'      => false
-*   'show_tags'      => false
-*   'only_titles'    => false
-*   'excerpt_length' => ''
+*   'title'             => 'Featured Tag'
+*   'tag_choice'        => ''
+*   'count'             => '0'
+*   'show_count'        => '3'
+*   'use_thumbnails'    => true
+*   'excerpt_thumb'     => '50'
+*   'show_tag_desc'     => false
+*   'show_meta'         => false
+*   'show_comments'     => false
+*   'show_cats'         => false
+*   'show_tags'         => false
+*   'only_titles'       => false
+*   'excerpt_length'    => ''
+*   'no_excerpt'        => false
 
 == Frequently Asked Questions ==
 = Where can I get support for this plugin? =
@@ -104,7 +107,7 @@ As of version 1.6.2 the Total Posts to Display is independent of the "posts per 
 1. The options panel (default settings).
 
 == Other Notes ==
-  Copyright 2009-2011  Edward Caissie  (email : edward.caissie@gmail.com)
+  Copyright 2009-2012  Edward Caissie  (email : edward.caissie@gmail.com)
 
   This program is free software; you can redistribute it and/or modify
   it under the terms of the GNU General Public License version 2,
@@ -128,6 +131,12 @@ As of version 1.6.2 the Total Posts to Display is independent of the "posts per 
 Please stay current with your WordPress installation, your active theme, and your plugins.
 
 == Changelog ==
+= 2.0 =
+* Documentation and code format updates
+* Add 'no_excerpt' option
+* Linked Featured Image to post
+* Rearrange Widget Options panel
+
 = 1.9.2 =
 * confirmed compatible with WordPress 3.4
 * fixed issue with featured image post thumbnails not showing
