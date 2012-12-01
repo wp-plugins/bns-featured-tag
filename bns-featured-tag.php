@@ -3,9 +3,10 @@
 Plugin Name: BNS Featured Tag
 Plugin URI: http://buynowshop.com/plugins/bns-featured-tag/
 Description: Plugin with multi-widget functionality that displays most recent posts from specific tag or tags (set with user options). Also includes user options to display: Tag Description; Author and meta details; comment totals; post categories; post tags; and either full post or excerpt (or any combination).
-Version: 2.1
+Version: 2.2
 Author: Edward Caissie
 Author URI: http://edwardcaissie.com/
+Textdomain: bns-ft
 License: GNU General Public License v2
 License URI: http://www.gnu.org/licenses/old-licenses/gpl-2.0.html
 */
@@ -22,7 +23,7 @@ License URI: http://www.gnu.org/licenses/old-licenses/gpl-2.0.html
  * @link        http://buynowshop.com/plugins/bns-featured-tag/
  * @link        https://github.com/Cais/bns-featured-tag/
  * @link        http://wordpress.org/extend/plugins/bns-featured-tag/
- * @version     2.1
+ * @version     2.2
  * @author      Edward Caissie <edward.caissie@gmail.com>
  * @copyright   Copyright (c) 2009-2012, Edward Caissie
  *
@@ -49,6 +50,17 @@ License URI: http://www.gnu.org/licenses/old-licenses/gpl-2.0.html
  * @version 2.1
  * @date    August 4, 2012
  * Add 'no_titles' option
+ *
+ * @version 2.2
+ * @date    December 1, 2012
+ * Remove load_plugin_textdomain as redundant
+ * Add filters to allow modification of author and date post meta details
+ * Add filters to allow modification of category list post meta details
+ * Add use current tag for single posts option
+ * Add posts offset option
+ *
+ * @todo Finish "use current" option
+ * @todo Add Link to title option
  */
 
 /**
@@ -64,21 +76,6 @@ if ( version_compare( $wp_version, "2.9", "<") )
     exit ( $exit_message );
 
 /**
- * BNS Featured Tag TextDomain
- * Make plugin text available for translation (i18n)
- *
- * @package BNS Featured Tag
- * @since   1.9
- *
- * Note: Translation files are expected to be found in the plugin root folder / directory.
- * `bns-ft` is being used in place of `bns-featured-tag`
- *
- * Last revised October 31, 2011
- */
-load_plugin_textdomain( 'bns-ft' );
-// End: BNS Featured Tag TextDomain
-
-/**
  * BNS Featured Tag Custom Excerpt
  *
  * Strips the post content of tags and returns the entire post content if there
@@ -92,19 +89,25 @@ load_plugin_textdomain( 'bns-ft' );
  * @param   $text - post content
  * @param   int $length - user defined amount of words
  *
+ * @uses    apply_filters
  * @uses    get_permalink
  * @uses    the_title_attribute
  *
  * @return  string
  *
- * @todo Review the possibility of optioning the read-more / permalink symbol - currently uses infinity symbol
+ * @version 2.2
+ * @date    December 1, 2012
+ * Added filter to full post link element
  */
 function bnsft_custom_excerpt( $text, $length = 55 ) {
     $text = strip_tags( $text );
     $words = explode( ' ', $text, $length + 1 );
 
+    /** @var $link_symbol - default: infinity symbol */
+    $link_symbol = apply_filters( 'bnsft_link_symbol', '&infin;' );
+
     /** Create link to full post for end of custom length excerpt output */
-    $bnsft_link = ' <strong><a class="bnsft-link" href="' . get_permalink() . '" title="' . the_title_attribute( array( 'before' => __( 'Permalink to: ', 'bns-ft' ), 'after' => '', 'echo' => false ) ) . '">&infin;</a></strong>';
+    $bnsft_link = ' <strong><a class="bnsft-link" href="' . get_permalink() . '" title="' . the_title_attribute( array( 'before' => __( 'Permalink to: ', 'bns-ft' ), 'after' => '', 'echo' => false ) ) . '">' . $link_symbol . '</a></strong>';
 
     if ( ( ! $length ) || ( count( $words ) < $length ) ) {
         $text .= $bnsft_link;
@@ -124,25 +127,67 @@ function bnsft_custom_excerpt( $text, $length = 55 ) {
  * @package BNS_Featured_Tag
  * @since   1.9
  *
+ * @uses    get_plugin_data
  * @uses    plugin_dir_path
  * @uses    plugin_dir_url
  * @uses    wp_enqueue_style
  *
  * @internal Used with action: wp_enqueue_styles
  *
- * Last revised December 14, 2011
  * @version 1.9.1
+ * @date    December 14, 2011
  * Fixed 404 error when 'bnsft-custom-style.css' is not available
+ *
+ * @version 2.2
+ * @date    December 1, 2012
+ * Programmatically add version number to enqueue calls
  */
 function BNSFT_Scripts_and_Styles() {
+    /** Call the wp-admin plugin code */
+    require_once( ABSPATH . '/wp-admin/includes/plugin.php' );
+    /** @var $bnsfc_data - holds the plugin header data */
+    $bnsft_data = get_plugin_data( __FILE__ );
+
     /** Enqueue Scripts */
     /** Enqueue Styles */
-    wp_enqueue_style( 'BNSFT-Style', plugin_dir_url( __FILE__ ) . 'bnsft-style.css', array(), '2.1', 'screen' );
+    wp_enqueue_style( 'BNSFT-Style', plugin_dir_url( __FILE__ ) . 'bnsft-style.css', array(), $bnsft_data['Version'], 'screen' );
     if ( is_readable( plugin_dir_path( __FILE__ ) . 'bnsft-custom-style.css' ) ) {
-        wp_enqueue_style( 'BNSFT-Custom-Style', plugin_dir_url( __FILE__ ) . 'bnsft-custom-style.css', array(), '2.1', 'screen' );
+        wp_enqueue_style( 'BNSFT-Custom-Style', plugin_dir_url( __FILE__ ) . 'bnsft-custom-style.css', array(), $bnsft_data['Version'], 'screen' );
     }
 }
 add_action( 'wp_enqueue_scripts', 'BNSFT_Scripts_and_Styles' );
+
+/**
+ * Enqueue Options Plugin Scripts and Styles
+ *
+ * Add plugin options scripts and stylesheet(s) to be used only on the Administration Panels
+ *
+ * @package BNS_Featured_Category
+ * @since   2.0
+ *
+ * @uses    plugin_dir_path
+ * @uses    plugin_dir_url
+ * @uses    wp_enqueue_script
+ * @uses    wp_enqueue_style
+ *
+ * @internal 'jQuery' is enqueued as a dependency of the 'bnsft-options.js' enqueue
+ * @internal Used with action: admin_enqueue_scripts
+ */
+function BNSFT_Options_Scripts_and_Styles() {
+    /** Call the wp-admin plugin code */
+    require_once( ABSPATH . '/wp-admin/includes/plugin.php' );
+    /** @var $bnsfc_data - holds the plugin header data */
+    $bnsft_data = get_plugin_data( __FILE__ );
+
+    /** Enqueue Options Scripts */
+    wp_enqueue_script( 'bnsft-options', plugin_dir_url( __FILE__ ) . 'bnsft-options.js', array( 'jquery' ), $bnsft_data['Version'] );
+    /** Enqueue Options Style Sheets */
+    wp_enqueue_style( 'BNSFT-Option-Style', plugin_dir_url( __FILE__ ) . 'bnsft-option-style.css', array(), $bnsft_data['Version'], 'screen' );
+    if ( is_readable( plugin_dir_path( __FILE__ ) . 'bnsft-options-custom-style.css' ) ) {
+        wp_enqueue_style( 'BNSFT-Options-Custom-Style', plugin_dir_url( __FILE__ ) . 'bnsft-options-custom-style.css', array(), $bnsft_data['Version'], 'screen' );
+    }
+}
+add_action( 'admin_enqueue_scripts', 'BNSFT_Options_Scripts_and_Styles' );
 
 /** Function that registers our widget. */
 function load_bnsft_widget() {
@@ -170,15 +215,18 @@ class BNS_Featured_Tag_Widget extends WP_Widget {
         /** User-selected settings */
         $title          = apply_filters( 'widget_title', $instance['title'] );
         $tag_choice     = $instance['tag_choice'];
+        $use_current    = $instance['use_current'];
         $show_count     = $instance['show_count'];
+        $offset         = $instance['offset'];
+        $sort_order     = $instance['sort_order'];
         $use_thumbnails = $instance['use_thumbnails'];
         $content_thumb  = $instance['content_thumb'];
         $excerpt_thumb  = $instance['excerpt_thumb'];
-        $show_tag_desc  = $instance['show_tag_desc'];
         $show_meta      = $instance['show_meta'];
         $show_comments  = $instance['show_comments'];
         $show_cats      = $instance['show_cats'];
         $show_tags      = $instance['show_tags'];
+        $show_tag_desc  = $instance['show_tag_desc'];
         $only_titles    = $instance['only_titles'];
         $no_titles      = $instance['no_titles'];
         $show_full      = $instance['show_full'];
@@ -203,7 +251,16 @@ class BNS_Featured_Tag_Widget extends WP_Widget {
         /** Remove leading hyphens from tag slugs if multiple tag names are entered with leading spaces */
         $tag_choice = str_replace( ',-', ', ', $tag_choice );
 
-        query_posts( "tag=$tag_choice&posts_per_page=$show_count" );
+        /** Check if $sort_order is set to rand (random) and use the `orderby` parameter; otherwise use the `order` parameter */
+        if ( 'rand' == $sort_order ) {
+            $query_args = "tag=$tag_choice&posts_per_page=$show_count&offset=$offset&orderby=$sort_order";
+        } else {
+            $query_args = "tag=$tag_choice&posts_per_page=$show_count&offset=$offset&order=$sort_order";
+        }
+
+        /** todo Review implementing new WP_Query in place of query_posts */
+        query_posts( $query_args );
+
         if ( $show_tag_desc ) {
             echo '<div class="bnsft-tag-desc">' . tag_description() . '</div>';
         }
@@ -218,13 +275,13 @@ class BNS_Featured_Tag_Widget extends WP_Widget {
                     <?php } ?>
                     <div class="post-details">
                         <?php if ( $show_meta ) {
-                            printf( __( 'by %1$s on %2$s', 'bns-ft' ), get_the_author(), get_the_time( get_option( 'date_format' ) ) ); ?><br />
+                            echo apply_filters( 'bnsfc_show_meta', sprintf( __( 'by %1$s on %2$s', 'bns-fc' ), get_the_author(), get_the_time( get_option( 'date_format' ) ) ) ); ?><br />
                         <?php }
                         if ( ( $show_comments ) && ( ! post_password_required() ) ) {
                             comments_popup_link( __( 'with No Comments', 'bns-ft' ), __( 'with 1 Comment', 'bns-ft' ), __( 'with % Comments', 'bns-ft' ), '', __( 'with Comments Closed', 'bns-ft' ) ); ?><br />
                         <?php }
                         if ( $show_cats ) {
-                            printf( __( 'in %s', 'bns-ft' ), get_the_category_list( ', ' ) ); ?><br />
+                            echo apply_filters( 'bnsfc_show_cats', sprintf( __( 'in %s', 'bns-fc' ), get_the_category_list( ', ' ) ) ); ?><br />
                         <?php }
                         if ( $show_tags ) {
                             the_tags( __( 'as ', 'bns-ft' ), ', ', '' ); ?><br />
@@ -272,15 +329,18 @@ class BNS_Featured_Tag_Widget extends WP_Widget {
         /** Strip tags (if needed) and update the widget settings */
         $instance['title']          = strip_tags( $new_instance['title'] );
         $instance['tag_choice']	  	= strip_tags( $new_instance['tag_choice'] );
+        $instance['use_current']    = $new_instance['use_current'];
         $instance['show_count']     = $new_instance['show_count'];
+        $instance['offset']         = $new_instance['offset'];
+        $instance['sort_order']     = $new_instance['sort_order'];
         $instance['use_thumbnails']	= $new_instance['use_thumbnails'];
         $instance['content_thumb']	= $new_instance['content_thumb'];
         $instance['excerpt_thumb']	= $new_instance['excerpt_thumb'];
-        $instance['show_tag_desc']	= $new_instance['show_tag_desc'];
         $instance['show_meta']      = $new_instance['show_meta'];
         $instance['show_comments']	= $new_instance['show_comments'];
         $instance['show_cats']      = $new_instance['show_cats'];
         $instance['show_tags']      = $new_instance['show_tags'];
+        $instance['show_tag_desc']	= $new_instance['show_tag_desc'];
         $instance['only_titles']  	= $new_instance['only_titles'];
         $instance['no_titles']      = $new_instance['no_titles'];
         $instance['show_full']      = $new_instance['show_full'];
@@ -297,34 +357,35 @@ class BNS_Featured_Tag_Widget extends WP_Widget {
         $defaults = array(
             'title'             => __( 'Featured Tag', 'bns-ft' ),
             'tag_choice'        => '',
+            'use_current'       => false,
             'count'             => '0',
             'show_count'        => '3',
+            'offset'            => '0',
+            'sort_order'        => 'desc',
             'use_thumbnails'    => true,
             'content_thumb'     => '100',
             'excerpt_thumb'     => '50',
-            'show_tag_desc'     => false,
             'show_meta'         => false,
             'show_comments'     => false,
             'show_cats'         => false,
             'show_tags'         => false,
+            'show_tag_desc'     => false,
             'only_titles'       => false,
             'no_titles'         => false,
             'show_full'         => false,
             'excerpt_length'    => '',
             'no_excerpt'        => false,
         );
-
         $instance = wp_parse_args( ( array ) $instance, $defaults );
         ?>
-
         <p>
             <label for="<?php echo $this->get_field_id( 'title' ); ?>"><?php _e( 'Title:', 'bns-ft' ); ?></label>
-            <input class="widefat" id="<?php echo $this->get_field_id( 'title' ); ?>" name="<?php echo $this->get_field_name( 'title' ); ?>" value="<?php echo $instance['title']; ?>" />
+            <input class="widefat" type="text" id="<?php echo $this->get_field_id( 'title' ); ?>" name="<?php echo $this->get_field_name( 'title' ); ?>" value="<?php echo $instance['title']; ?>" />
         </p>
 
         <p>
             <label for="<?php echo $this->get_field_id( 'tag_choice' ); ?>"><?php _e( 'Tag Names, separated by commas:', 'bns-ft' ); ?></label>
-            <input class="widefat" id="<?php echo $this->get_field_id( 'tag_choice' ); ?>" name="<?php echo $this->get_field_name( 'tag_choice' ); ?>" value="<?php echo $instance['tag_choice']; ?>" />
+            <input class="widefat" type="text" id="<?php echo $this->get_field_id( 'tag_choice' ); ?>" name="<?php echo $this->get_field_name( 'tag_choice' ); ?>" value="<?php echo $instance['tag_choice']; ?>" />
         </p>
 
         <p>
@@ -332,80 +393,122 @@ class BNS_Featured_Tag_Widget extends WP_Widget {
             <label for="<?php echo $this->get_field_id( 'show_tag_desc' ); ?>"><?php _e( 'Show first Tag choice description?', 'bns-ft' ); ?></label>
         </p>
 
-        <hr />
-        <p><?php _e( 'NB: Some options may not be available depending on which ones are selected.', 'bns-fc'); ?></p>
-
         <p>
+            <input class="checkbox" type="checkbox" <?php checked( (bool) $instance['use_current'], true ); ?> id="<?php echo $this->get_field_id( 'use_current' ); ?>" name="<?php echo $this->get_field_name( 'use_current' ); ?>" />
+            <label for="<?php echo $this->get_field_id( 'use_current' ); ?>"><?php _e( '(beta) Use current tag in single view?', 'bns-ft' ); ?></label>
+        </p>
+
+        <table class="bnsft-counts">
+            <tr>
+                <td>
+                    <p>
+                        <label for="<?php echo $this->get_field_id( 'show_count' ); ?>"><?php _e( 'Posts to Display:', 'bns-ft' ); ?></label>
+                        <input type="text" id="<?php echo $this->get_field_id( 'show_count' ); ?>" name="<?php echo $this->get_field_name( 'show_count' ); ?>" value="<?php echo $instance['show_count']; ?>" style="width:85%;" />
+                    </p>
+                </td>
+                <td>
+                    <p>
+                        <label for="<?php echo $this->get_field_id( 'offset' ); ?>"><?php _e( 'Posts Offset:', 'bns-ft' ); ?></label>
+                        <input type="text" id="<?php echo $this->get_field_id( 'offset' ); ?>" name="<?php echo $this->get_field_name( 'offset' ); ?>" value="<?php echo $instance['offset']; ?>" style="width:85%;" />
+                    </p>
+                </td>
+            </tr>
+
+            <tr>
+                <td>
+                    <p>
+                        <label for="<?php echo $this->get_field_id( 'sort_order' ); ?>"><?php _e( 'Sort Order:', 'bns-ft' ); ?></label>
+                        <select id="<?php echo $this->get_field_id( 'sort_order' ); ?>" name="<?php echo $this->get_field_name( 'sort_order' ); ?>" style="width:85%;" >
+                            <option <?php selected( 'asc', $instance['sort_order'], true ); ?>>asc</option>
+                            <option <?php selected( 'desc', $instance['sort_order'], true ); ?>>desc</option>
+                            <option <?php selected( 'rand', $instance['sort_order'], true ); ?>>rand</option>
+                        </select>
+                    </p>
+                </td>
+            </tr>
+
+        </table>
+
+        <hr />
+        <!-- The following option choices may affect the widget option panel layout -->
+        <p><?php _e( 'NB: Some options may not be available depending on which ones are selected.', 'bns-fc'); ?></p>
+        <p class="bnsfc-display-all-posts-check">
+            <input class="checkbox" type="checkbox" <?php checked( ( bool ) $instance['only_titles'], true ); ?> id="<?php echo $this->get_field_id( 'only_titles' ); ?>" name="<?php echo $this->get_field_name( 'only_titles' ); ?>" />
+            <?php $all_options_toggle = ( checked( (bool) $instance['only_titles'], true, false ) ) ? 'closed' : 'open'; ?>
+            <label for="<?php echo $this->get_field_id( 'only_titles' ); ?>"><?php _e( 'ONLY display post Titles?', 'bns-ft' ); ?></label>
+        </p>
+
+        <p class="bnsft-all-options-<?php echo $all_options_toggle; ?> bnsft-no-titles">
             <input class="checkbox" type="checkbox" <?php checked( ( bool ) $instance['no_titles'], true ); ?> id="<?php echo $this->get_field_id( 'no_titles' ); ?>" name="<?php echo $this->get_field_name( 'no_titles' ); ?>" />
             <label for="<?php echo $this->get_field_id( 'no_titles' ); ?>"><?php _e( 'Do NOT display Post Titles?', 'bns-ft' ); ?></label>
         </p>
 
-        <p>
-            <input class="checkbox" type="checkbox" <?php checked( ( bool ) $instance['only_titles'], true ); ?> id="<?php echo $this->get_field_id( 'only_titles' ); ?>" name="<?php echo $this->get_field_name( 'only_titles' ); ?>" />
-            <label for="<?php echo $this->get_field_id( 'only_titles' ); ?>"><?php _e( 'Display only post Titles?', 'bns-ft' ); ?></label>
-        </p>
+        <!-- If the theme supports post-thumbnails carry on; otherwise hide the thumbnails section -->
+        <?php if ( ! current_theme_supports( 'post-thumbnails' ) ) echo '<div class="bnsfc-thumbnails-closed">'; ?>
+            <p class="bnsft-all-options-<?php echo $all_options_toggle; ?> bnsft-display-thumbnail-sizes"><!-- Hide all options below if ONLY post titles are to be displayed -->
+                <input class="checkbox" type="checkbox" <?php checked( (bool) $instance['use_thumbnails'], true ); ?> id="<?php echo $this->get_field_id( 'use_thumbnails' ); ?>" name="<?php echo $this->get_field_name( 'use_thumbnails' ); ?>" />
+                <?php $thumbnails_toggle = ( checked( (bool) $instance['use_thumbnails'], true, false ) ) ? 'open' : 'closed'; ?>
+                <label for="<?php echo $this->get_field_id( 'use_thumbnails' ); ?>"><?php _e( 'Use Featured Image Thumbnails?', 'bns-ft' ); ?></label>
+            </p>
 
-        <p>
-            <input class="checkbox" type="checkbox" <?php checked( (bool) $instance['use_thumbnails'], true ); ?> id="<?php echo $this->get_field_id( 'use_thumbnails' ); ?>" name="<?php echo $this->get_field_name( 'use_thumbnails' ); ?>" />
-            <label for="<?php echo $this->get_field_id( 'use_thumbnails' ); ?>"><?php _e( 'Use Featured Image / Post Thumbnails?', 'bns-ft' ); ?></label>
-        </p>
+            <table class="bnsft-thumbnails-<?php echo $thumbnails_toggle; ?> bnsft-all-options-<?php echo $all_options_toggle; ?>"><!-- Hide table if featured image / thumbnails are not used -->
+                <tr>
+                    <td>
+                        <p>
+                            <label for="<?php echo $this->get_field_id( 'content_thumb' ); ?>"><?php _e( 'Content Thumbnail Size (in px):', 'bns-ft' ); ?></label>
+                            <input type="text" id="<?php echo $this->get_field_id( 'content_thumb' ); ?>" name="<?php echo $this->get_field_name( 'content_thumb' ); ?>" value="<?php echo $instance['content_thumb']; ?>" style="width:85%;" />
+                        </p>
+                    </td>
+                    <td>
+                        <p>
+                            <label for="<?php echo $this->get_field_id( 'excerpt_thumb' ); ?>"><?php _e( 'Excerpt Thumbnail Size (in px):', 'bns-ft' ); ?></label>
+                            <input type="text" id="<?php echo $this->get_field_id( 'excerpt_thumb' ); ?>" name="<?php echo $this->get_field_name( 'excerpt_thumb' ); ?>" value="<?php echo $instance['excerpt_thumb']; ?>" style="width:85%;" />
+                        </p>
+                    </td>
+                </tr>
+            </table>
+        <?php if ( ! current_theme_supports( 'post-thumbnails' ) ) echo '</div>'; ?>
+        <!-- Carry on from here if there is no thumbnail support -->
 
-        <table>
-            <tr>
-                <td>
-                    <p>
-                        <label for="<?php echo $this->get_field_id( 'content_thumb' ); ?>"><?php _e( 'Content Thumbnail Size (in px):', 'bns-ft' ); ?></label>
-                        <input id="<?php echo $this->get_field_id( 'content_thumb' ); ?>" name="<?php echo $this->get_field_name( 'content_thumb' ); ?>" value="<?php echo $instance['content_thumb']; ?>" style="width:85%;" />
-                    </p>
-                </td>
-                <td>
-                    <p>
-                        <label for="<?php echo $this->get_field_id( 'excerpt_thumb' ); ?>"><?php _e( 'Excerpt Thumbnail Size (in px):', 'bns-ft' ); ?></label>
-                        <input id="<?php echo $this->get_field_id( 'excerpt_thumb' ); ?>" name="<?php echo $this->get_field_name( 'excerpt_thumb' ); ?>" value="<?php echo $instance['excerpt_thumb']; ?>" style="width:85%;" />
-                    </p>
-                </td>
-            </tr>
-        </table>
-
-        <p>
-            <label for="<?php echo $this->get_field_id( 'show_count' ); ?>"><?php _e( 'Total Posts to Display:', 'bns-ft' ); ?></label>
-            <input class="widefat" id="<?php echo $this->get_field_id( 'show_count' ); ?>" name="<?php echo $this->get_field_name( 'show_count' ); ?>" value="<?php echo $instance['show_count']; ?>" />
-        </p>
-
-        <p>
+        <p class="bnsft-all-options-<?php echo $all_options_toggle; ?>">
             <input class="checkbox" type="checkbox" <?php checked( ( bool ) $instance['show_meta'], true ); ?> id="<?php echo $this->get_field_id( 'show_meta' ); ?>" name="<?php echo $this->get_field_name( 'show_meta' ); ?>" />
             <label for="<?php echo $this->get_field_id( 'show_meta' ); ?>"><?php _e( 'Display Author Meta Details?', 'bns-ft' ); ?></label>
         </p>
 
-        <p>
+
+        <p class="bnsft-all-options-<?php echo $all_options_toggle; ?>">
             <input class="checkbox" type="checkbox" <?php checked( ( bool ) $instance['show_comments'], true ); ?> id="<?php echo $this->get_field_id( 'show_comments' ); ?>" name="<?php echo $this->get_field_name( 'show_comments' ); ?>" />
             <label for="<?php echo $this->get_field_id( 'show_comments' ); ?>"><?php _e( 'Display Comment Totals?', 'bns-ft' ); ?></label>
         </p>
 
-        <p>
+        <p class="bnsft-all-options-<?php echo $all_options_toggle; ?>">
             <input class="checkbox" type="checkbox" <?php checked( ( bool ) $instance['show_cats'], true ); ?> id="<?php echo $this->get_field_id( 'show_cats' ); ?>" name="<?php echo $this->get_field_name( 'show_cats' ); ?>" />
             <label for="<?php echo $this->get_field_id( 'show_cats' ); ?>"><?php _e( 'Display the Post Categories?', 'bns-ft' ); ?></label>
         </p>
 
-        <p>
+        <p class="bnsft-all-options-<?php echo $all_options_toggle; ?>">
             <input class="checkbox" type="checkbox" <?php checked( ( bool ) $instance['show_tags'], true ); ?> id="<?php echo $this->get_field_id( 'show_tags' ); ?>" name="<?php echo $this->get_field_name( 'show_tags' ); ?>" />
             <label for="<?php echo $this->get_field_id( 'show_tags' ); ?>"><?php _e( 'Display the Post Tags?', 'bns-ft' ); ?></label>
         </p>
 
-        <p>
+        <p class="bnsft-all-options-<?php echo $all_options_toggle; ?> bnsft-excerpt-option-open-check">
             <input class="checkbox" type="checkbox" <?php checked( ( bool ) $instance['show_full'], true ); ?> id="<?php echo $this->get_field_id( 'show_full' ); ?>" name="<?php echo $this->get_field_name( 'show_full' ); ?>" />
+            <?php $show_full_toggle = ( checked( (bool) $instance['show_full'], true, false ) ) ? 'closed' : 'open'; ?>
             <label for="<?php echo $this->get_field_id( 'show_full' ); ?>"><?php _e( 'Display entire post?', 'bns-ft' ); ?></label>
         </p>
 
-        <hr /> <!-- separates meta details display from content/excerpt display options -->
-        <p><?php _e( 'The excerpt is shown by default; or, the first 55 words if it does not exist.', 'bns-ft' ); ?></p>
-
-        <p>
-            <label for="<?php echo $this->get_field_id( 'excerpt_length' ); ?>"><?php _e( 'Set your word count if you want more or less than 55.', 'bns-ft' ); ?></label>
-            <input class="widefat" id="<?php echo $this->get_field_id( 'excerpt_length' ); ?>" name="<?php echo $this->get_field_name( 'excerpt_length' ); ?>" value="<?php echo $instance['excerpt_length']; ?>" />
+        <hr />
+        <!-- Hide excerpt explanation and word count option if entire post is displayed -->
+        <p class="bnsft-all-options-<?php echo $all_options_toggle; ?> bnsft-excerpt-option-<?php echo $show_full_toggle; ?>">
+            <?php _e( 'The post excerpt is shown by default, if it exists; otherwise the first 55 words of the post are shown as the excerpt ...', 'bns-ft'); ?>
         </p>
 
-        <p>
+        <p class="bnsft-all-options-<?php echo $all_options_toggle; ?> bnsft-excerpt-option-<?php echo $show_full_toggle; ?>">
+            <label for="<?php echo $this->get_field_id( 'excerpt_length' ); ?>"><?php _e( '... or set the amount of words you want to show:', 'bns-ft' ); ?></label>
+            <input type="text" id="<?php echo $this->get_field_id( 'excerpt_length' ); ?>" name="<?php echo $this->get_field_name( 'excerpt_length' ); ?>" value="<?php echo $instance['excerpt_length']; ?>" style="width:95%;" />
+        </p>
+
+        <p class="bnsft-all-options-<?php echo $all_options_toggle; ?> bnsft-excerpt-option-<?php echo $show_full_toggle; ?>">
             <label for="<?php echo $this->get_field_id( 'no_excerpt' ); ?>"><?php _e( '... or have no excerpt at all!', 'bns-ft' ); ?></label>
             <input class="checkbox" type="checkbox" <?php checked( (bool) $instance['no_excerpt'], true ); ?> id="<?php echo $this->get_field_id( 'no_excerpt' ); ?>" name="<?php echo $this->get_field_name( 'no_excerpt' ); ?>" />
         </p>
@@ -430,6 +533,13 @@ class BNS_Featured_Tag_Widget extends WP_Widget {
  * @version 2.1
  * @date    August 4, 2012
  * Add 'no_titles' option
+ *
+ * @version 2.2
+ * @date    December 1, 2012
+ * Add use current option
+ * Add offset option
+ * Add sort order option
+ * Optimize output buffer closure in shortcode function
  */
 function bnsft_shortcode( $atts ) {
     /** Get ready to capture the elusive widget output */
@@ -439,8 +549,11 @@ function bnsft_shortcode( $atts ) {
         $instance = shortcode_atts( array(
             'title'             => __( 'Featured Tag', 'bns-ft' ),
             'tag_choice'        => '',
+            'use_current'       => false, /** Will not change anything if set to true, yet */
             'count'             => '0',
             'show_count'        => '3',
+            'offset'            => '',
+            'sort_order'        => 'DESC',
             'use_thumbnails'    => true,
             'content_thumb'     => '100',
             'excerpt_thumb'     => '50',
@@ -463,9 +576,7 @@ function bnsft_shortcode( $atts ) {
             $after_title    = '',
         ) );
     /** Get the_widget output and put into its own container */
-    $bnsft_content = ob_get_contents();
-    ob_end_clean();
-    // All your snipes belong to us!
+    $bnsft_content = ob_get_clean();
 
     return $bnsft_content;
 }
