@@ -3,7 +3,7 @@
 Plugin Name: BNS Featured Tag
 Plugin URI: http://buynowshop.com/plugins/bns-featured-tag/
 Description: Plugin with multi-widget functionality that displays most recent posts from specific tag or tags (set with user options). Also includes user options to display: Tag Description; Author and meta details; comment totals; post categories; post tags; and either full post or excerpt (or any combination).
-Version: 2.3.1
+Version: 2.4
 Author: Edward Caissie
 Author URI: http://edwardcaissie.com/
 Textdomain: bns-ft
@@ -23,7 +23,7 @@ License URI: http://www.gnu.org/licenses/old-licenses/gpl-2.0.html
  * @link        http://buynowshop.com/plugins/bns-featured-tag/
  * @link        https://github.com/Cais/bns-featured-tag/
  * @link        http://wordpress.org/extend/plugins/bns-featured-tag/
- * @version     2.3.1
+ * @version     2.4
  * @author      Edward Caissie <edward.caissie@gmail.com>
  * @copyright   Copyright (c) 2009-2013, Edward Caissie
  *
@@ -47,14 +47,6 @@ License URI: http://www.gnu.org/licenses/old-licenses/gpl-2.0.html
  * The license for this software can also likely be found here:
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
- * @version 2.2
- * @date    December 1, 2012
- * Remove load_plugin_textdomain as redundant
- * Add filters to allow modification of author and date post meta details
- * Add filters to allow modification of category list post meta details
- * Add use current tag for single posts option
- * Add posts offset option
- *
  * @version 2.3
  * @date    February 17, 2013
  * Added code block termination comments and other comments / documentation
@@ -66,7 +58,11 @@ License URI: http://www.gnu.org/licenses/old-licenses/gpl-2.0.html
  * Fixed where content and excerpt post thumbnail sizes are used
  * Fixed conditional check for post thumbnails usage
  *
- * @todo Finish "use current" option
+ * @version 2.4
+ * @date    July 14, 2013
+ * Added feature as requested http://wordpress.org/support/topic/is-it-possible-to-exclude-current-post
+ * Completed use current post tags in single view option / functionality
+ *
  * @todo Add Link to title option
  */
 class BNS_Featured_Tag_Widget extends WP_Widget {
@@ -241,32 +237,38 @@ class BNS_Featured_Tag_Widget extends WP_Widget {
      * @version 2.3.1
      * @date    February 17, 2013
      * Fixed where content and excerpt post thumbnail sizes are used
+     *
+     * @version 2.4
+     * @date    July 14, 2013
+     * Added exclude current post option
+     * Completed use current post tags option
      */
     function widget( $args, $instance ) {
         extract( $args );
 
         /** User-selected settings */
-        $title          = apply_filters( 'widget_title', $instance['title'] );
-        $tag_choice     = $instance['tag_choice'];
-        $use_current    = $instance['use_current'];
-        $show_count     = $instance['show_count'];
-        $offset         = $instance['offset'];
-        $sort_order     = $instance['sort_order'];
-        $use_thumbnails = $instance['use_thumbnails'];
-        $content_thumb  = $instance['content_thumb'];
-        $excerpt_thumb  = $instance['excerpt_thumb'];
-        $show_meta      = $instance['show_meta'];
-        $show_comments  = $instance['show_comments'];
-        $show_cats      = $instance['show_cats'];
-        $show_tags      = $instance['show_tags'];
-        $show_tag_desc  = $instance['show_tag_desc'];
-        $only_titles    = $instance['only_titles'];
-        $no_titles      = $instance['no_titles'];
-        $show_full      = $instance['show_full'];
-        $excerpt_length = $instance['excerpt_length'];
-        $no_excerpt     = $instance['no_excerpt'];
+        $title           = apply_filters( 'widget_title', $instance['title'] );
+        $tag_choice      = $instance['tag_choice'];
+        $use_current     = $instance['use_current'];
+        $exclude_current = $instance['exclude_current'];
+        $show_count      = $instance['show_count'];
+        $offset          = $instance['offset'];
+        $sort_order      = $instance['sort_order'];
+        $use_thumbnails  = $instance['use_thumbnails'];
+        $content_thumb   = $instance['content_thumb'];
+        $excerpt_thumb   = $instance['excerpt_thumb'];
+        $show_meta       = $instance['show_meta'];
+        $show_comments   = $instance['show_comments'];
+        $show_cats       = $instance['show_cats'];
+        $show_tags       = $instance['show_tags'];
+        $show_tag_desc   = $instance['show_tag_desc'];
+        $only_titles     = $instance['only_titles'];
+        $no_titles       = $instance['no_titles'];
+        $show_full       = $instance['show_full'];
+        $excerpt_length  = $instance['excerpt_length'];
+        $no_excerpt      = $instance['no_excerpt'];
         /** Plugin requires counter variable to be part of its arguments?! */
-        $count          = $instance['count'];
+        $count           = $instance['count'];
 
         /** @var    $before_widget  string - defined by theme */
         echo $before_widget;
@@ -278,12 +280,28 @@ class BNS_Featured_Tag_Widget extends WP_Widget {
             echo $before_title . $title . $after_title;
         } /** End if - title */
 
-        /** Display posts from widget settings */
+        /** Use current post tag(s) when in single view */
+        if ( is_single() && $use_current ) {
+            /** Get the global post object to find the tags */
+            global $post;
+            /** @var $tag_choice - clear current choice(s) */
+            $tag_choice = '';
+            /** Loop through current post tags and add them to tag choice */
+            foreach( get_the_tags( $post->ID ) as $current_tag ) {
+                $tag_choice .= $current_tag->name . ', ';
+            } /** End foreach - get the tags */
+        } /** End if - is single and use current */
+
         /** Replace spaces with hyphens to create tag slugs from the name */
         $tag_choice = str_replace( ' ', '-', $tag_choice );
 
         /** Remove leading hyphens from tag slugs if multiple tag names are entered with leading spaces */
         $tag_choice = str_replace( ',-', ', ', $tag_choice );
+
+        /** Do not include current post in single view */
+        if ( is_single() && $exclude_current ) {
+            $excluded_post = get_the_ID();
+        } /** End if - is single and exclude current */
 
         /** Check if $sort_order is set to rand (random) and use the `orderby` parameter; otherwise use the `order` parameter */
         if ( 'rand' == $sort_order ) {
@@ -291,14 +309,16 @@ class BNS_Featured_Tag_Widget extends WP_Widget {
                 'tag'               => $tag_choice,
                 'posts_per_page'    => $show_count,
                 'offset'            => $offset,
-                'orderby'           => $sort_order
+                'orderby'           => $sort_order,
+                'post__not_in'      => array( $excluded_post )
             );
         } else {
             $query_args = array(
                 'tag'               => $tag_choice,
                 'posts_per_page'    => $show_count,
                 'offset'            => $offset,
-                'order'             => $sort_order
+                'order'             => $sort_order,
+                'post__not_in'      => array( $excluded_post )
             );
         } /** End if - sort order */
 
@@ -309,6 +329,7 @@ class BNS_Featured_Tag_Widget extends WP_Widget {
             echo '<div class="bnsft-tag-desc">' . tag_description() . '</div>';
         } /** End if - show tag description */
 
+        /** Display posts from widget settings */
         if ( $bnsft_query->have_posts()) : while ( $bnsft_query->have_posts() ) : $bnsft_query->the_post();
 
             if ( $count == $show_count ) {
@@ -403,6 +424,7 @@ class BNS_Featured_Tag_Widget extends WP_Widget {
         /** @var $after_widget string - defined by theme */
         echo $after_widget;
 
+        /** Make sure to clean up after ourselves */
         wp_reset_postdata();
 
     } /** End function - widget */
@@ -420,27 +442,28 @@ class BNS_Featured_Tag_Widget extends WP_Widget {
         $instance = $old_instance;
 
         /** Strip tags (if needed) and update the widget settings */
-        $instance['title']          = strip_tags( $new_instance['title'] );
-        $instance['tag_choice']	  	= strip_tags( $new_instance['tag_choice'] );
-        $instance['use_current']    = $new_instance['use_current'];
-        $instance['show_count']     = $new_instance['show_count'];
-        $instance['offset']         = $new_instance['offset'];
-        $instance['sort_order']     = $new_instance['sort_order'];
-        $instance['use_thumbnails']	= $new_instance['use_thumbnails'];
-        $instance['content_thumb']	= $new_instance['content_thumb'];
-        $instance['excerpt_thumb']	= $new_instance['excerpt_thumb'];
-        $instance['show_meta']      = $new_instance['show_meta'];
-        $instance['show_comments']	= $new_instance['show_comments'];
-        $instance['show_cats']      = $new_instance['show_cats'];
-        $instance['show_tags']      = $new_instance['show_tags'];
-        $instance['show_tag_desc']	= $new_instance['show_tag_desc'];
-        $instance['only_titles']  	= $new_instance['only_titles'];
-        $instance['no_titles']      = $new_instance['no_titles'];
-        $instance['show_full']      = $new_instance['show_full'];
-        $instance['excerpt_length']	= $new_instance['excerpt_length'];
-        $instance['no_excerpt']     = $new_instance['no_excerpt'];
+        $instance['title']           = strip_tags( $new_instance['title'] );
+        $instance['tag_choice']	  	 = strip_tags( $new_instance['tag_choice'] );
+        $instance['use_current']     = $new_instance['use_current'];
+        $instance['exclude_current'] = $new_instance['exclude_current'];
+        $instance['show_count']      = $new_instance['show_count'];
+        $instance['offset']          = $new_instance['offset'];
+        $instance['sort_order']      = $new_instance['sort_order'];
+        $instance['use_thumbnails']	 = $new_instance['use_thumbnails'];
+        $instance['content_thumb']	 = $new_instance['content_thumb'];
+        $instance['excerpt_thumb']	 = $new_instance['excerpt_thumb'];
+        $instance['show_meta']       = $new_instance['show_meta'];
+        $instance['show_comments']	 = $new_instance['show_comments'];
+        $instance['show_cats']       = $new_instance['show_cats'];
+        $instance['show_tags']       = $new_instance['show_tags'];
+        $instance['show_tag_desc']	 = $new_instance['show_tag_desc'];
+        $instance['only_titles']  	 = $new_instance['only_titles'];
+        $instance['no_titles']       = $new_instance['no_titles'];
+        $instance['show_full']       = $new_instance['show_full'];
+        $instance['excerpt_length']	 = $new_instance['excerpt_length'];
+        $instance['no_excerpt']      = $new_instance['no_excerpt'];
         /** added to be able to reset count to zero for every instance of the plugin */
-        $instance['count']          = $new_instance['count'];
+        $instance['count']           = $new_instance['count'];
 
         return $instance;
 
@@ -460,6 +483,7 @@ class BNS_Featured_Tag_Widget extends WP_Widget {
             'title'             => __( 'Featured Tag', 'bns-ft' ),
             'tag_choice'        => '',
             'use_current'       => false,
+            'exclude_current'   => false,
             'count'             => '0',
             'show_count'        => '3',
             'offset'            => '0',
@@ -498,6 +522,11 @@ class BNS_Featured_Tag_Widget extends WP_Widget {
         <p>
             <input class="checkbox" type="checkbox" <?php checked( (bool) $instance['use_current'], true ); ?> id="<?php echo $this->get_field_id( 'use_current' ); ?>" name="<?php echo $this->get_field_name( 'use_current' ); ?>" />
             <label for="<?php echo $this->get_field_id( 'use_current' ); ?>"><?php _e( '(beta) Use current tag in single view?', 'bns-ft' ); ?></label>
+        </p>
+
+        <p>
+            <input class="checkbox" type="checkbox" <?php checked( (bool) $instance['exclude_current'], true ); ?> id="<?php echo $this->get_field_id( 'exclude_current' ); ?>" name="<?php echo $this->get_field_name( 'exclude_current' ); ?>" />
+            <label for="<?php echo $this->get_field_id( 'exclude_current' ); ?>"><?php _e( '(beta) Exclude the current post in single view?', 'bns-ft' ); ?></label>
         </p>
 
         <table class="bnsft-counts">
@@ -651,7 +680,8 @@ class BNS_Featured_Tag_Widget extends WP_Widget {
             $instance = shortcode_atts( array(
                 'title'             => __( 'Featured Tag', 'bns-ft' ),
                 'tag_choice'        => '',
-                'use_current'       => false, /** Will not change anything if set to true, yet */
+                'use_current'       => false, /** Beta */
+                'exclude_current'   => false, /** Beta */
                 'count'             => '0',
                 'show_count'        => '3',
                 'offset'            => '',
