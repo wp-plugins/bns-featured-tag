@@ -3,7 +3,7 @@
 Plugin Name: BNS Featured Tag
 Plugin URI: http://buynowshop.com/plugins/bns-featured-tag/
 Description: Plugin with multi-widget functionality that displays most recent posts from specific tag or tags (set with user options). Also includes user options to display: Tag Description; Author and meta details; comment totals; post categories; post tags; and either full post or excerpt (or any combination).
-Version: 2.4
+Version: 2.5
 Author: Edward Caissie
 Author URI: http://edwardcaissie.com/
 Textdomain: bns-ft
@@ -23,7 +23,7 @@ License URI: http://www.gnu.org/licenses/old-licenses/gpl-2.0.html
  * @link        http://buynowshop.com/plugins/bns-featured-tag/
  * @link        https://github.com/Cais/bns-featured-tag/
  * @link        http://wordpress.org/extend/plugins/bns-featured-tag/
- * @version     2.4
+ * @version     2.5
  * @author      Edward Caissie <edward.caissie@gmail.com>
  * @copyright   Copyright (c) 2009-2013, Edward Caissie
  *
@@ -47,21 +47,17 @@ License URI: http://www.gnu.org/licenses/old-licenses/gpl-2.0.html
  * The license for this software can also likely be found here:
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
- * @version 2.3
- * @date    February 17, 2013
- * Added code block termination comments and other comments / documentation
- * Moved all code into class structure
- * Replace `query_posts` with new `WP_Query` class object
- *
- * @version 2.3.1
- * @date    February 17, 2013
- * Fixed where content and excerpt post thumbnail sizes are used
- * Fixed conditional check for post thumbnails usage
- *
  * @version 2.4
  * @date    July 14, 2013
  * Added feature as requested http://wordpress.org/support/topic/is-it-possible-to-exclude-current-post
  * Completed use current post tags in single view option / functionality
+ *
+ * @version 2.4.1
+ * @date    November 2013
+ *
+ * @version 2.5
+ * @date    ...
+ * Added new "union" option so posts must be in all tags chosen
  *
  * @todo Add Link to title option
  */
@@ -140,7 +136,11 @@ class BNS_Featured_Tag_Widget extends WP_Widget {
         $link_symbol = apply_filters( 'bnsft_link_symbol', '&infin;' );
 
         /** Create link to full post for end of custom length excerpt output */
-        $bnsft_link = ' <strong><a class="bnsft-link" href="' . get_permalink() . '" title="' . the_title_attribute( array( 'before' => __( 'Permalink to: ', 'bns-ft' ), 'after' => '', 'echo' => false ) ) . '">' . $link_symbol . '</a></strong>';
+        $bnsft_link = ' <strong>
+            <a class="bnsft-link" href="' . get_permalink() . '" title="' . the_title_attribute( array( 'before' => __( 'Permalink to: ', 'bns-ft' ), 'after' => '', 'echo' => false ) ) . '">'
+                . $link_symbol .
+            '</a>
+        </strong>';
 
         if ( ( ! $length ) || ( count( $words ) < $length ) ) {
             $text .= $bnsft_link;
@@ -247,36 +247,37 @@ class BNS_Featured_Tag_Widget extends WP_Widget {
         extract( $args );
 
         /** User-selected settings */
-        $title           = apply_filters( 'widget_title', $instance['title'] );
-        $tag_choice      = $instance['tag_choice'];
-        $use_current     = $instance['use_current'];
-        $exclude_current = $instance['exclude_current'];
-        $show_count      = $instance['show_count'];
-        $offset          = $instance['offset'];
-        $sort_order      = $instance['sort_order'];
-        $use_thumbnails  = $instance['use_thumbnails'];
-        $content_thumb   = $instance['content_thumb'];
-        $excerpt_thumb   = $instance['excerpt_thumb'];
-        $show_meta       = $instance['show_meta'];
-        $show_comments   = $instance['show_comments'];
-        $show_cats       = $instance['show_cats'];
-        $show_tags       = $instance['show_tags'];
-        $show_tag_desc   = $instance['show_tag_desc'];
-        $only_titles     = $instance['only_titles'];
-        $no_titles       = $instance['no_titles'];
-        $show_full       = $instance['show_full'];
-        $excerpt_length  = $instance['excerpt_length'];
-        $no_excerpt      = $instance['no_excerpt'];
+        $title              = apply_filters( 'widget_title', $instance['title'] );
+        $tag_choice         = $instance['tag_choice'];
+        $union              = $instance['union'];
+        $use_current        = $instance['use_current'];
+        $exclude_current    = $instance['exclude_current'];
+        $show_count         = $instance['show_count'];
+        $offset             = $instance['offset'];
+        $sort_order         = $instance['sort_order'];
+        $use_thumbnails     = $instance['use_thumbnails'];
+        $content_thumb      = $instance['content_thumb'];
+        $excerpt_thumb      = $instance['excerpt_thumb'];
+        $show_meta          = $instance['show_meta'];
+        $show_comments      = $instance['show_comments'];
+        $show_cats          = $instance['show_cats'];
+        $show_tags          = $instance['show_tags'];
+        $show_tag_desc      = $instance['show_tag_desc'];
+        $only_titles        = $instance['only_titles'];
+        $no_titles          = $instance['no_titles'];
+        $show_full          = $instance['show_full'];
+        $excerpt_length     = $instance['excerpt_length'];
+        $no_excerpt         = $instance['no_excerpt'];
         /** Plugin requires counter variable to be part of its arguments?! */
-        $count           = $instance['count'];
+        $count              = $instance['count'];
 
         /** @var    $before_widget  string - defined by theme */
         echo $before_widget;
 
         /** Widget $title $before_widget and $after_widget defined by theme */
         if ( $title ) {
-            /** @var    $before_title   string - defined by theme */
-            /** @var    $after_title    string - defined by theme */
+            /** @var string $before_title - defined by theme */
+            /** @var string $after_title - defined by theme */
             echo $before_title . $title . $after_title;
         } /** End if - title */
 
@@ -298,128 +299,177 @@ class BNS_Featured_Tag_Widget extends WP_Widget {
         /** Remove leading hyphens from tag slugs if multiple tag names are entered with leading spaces */
         $tag_choice = str_replace( ',-', ', ', $tag_choice );
 
+        /** @var array $query_args - holds query arguments to be passed */
+        $query_args = array(
+            'tag'               => $tag_choice,
+            'posts_per_page'    => $show_count,
+            'offset'            => $offset
+        );
+
         /** Do not include current post in single view */
         if ( is_single() && $exclude_current ) {
             $excluded_post = get_the_ID();
+            $query_args = array_merge( $query_args, array( 'post__not_in' => array( $excluded_post ) ) );
         } /** End if - is single and exclude current */
 
-        /** Check if $sort_order is set to rand (random) and use the `orderby` parameter; otherwise use the `order` parameter */
+        /**
+         * Check if $sort_order is set to rand (random) and use the `orderby`
+         * parameter; otherwise use the `order` parameter
+         */
         if ( 'rand' == $sort_order ) {
-            $query_args = array(
-                'tag'               => $tag_choice,
-                'posts_per_page'    => $show_count,
-                'offset'            => $offset,
-                'orderby'           => $sort_order,
-                'post__not_in'      => array( $excluded_post )
-            );
+            $query_args = array_merge( $query_args, array( 'orderby' => $sort_order ) );
         } else {
-            $query_args = array(
-                'tag'               => $tag_choice,
-                'posts_per_page'    => $show_count,
-                'offset'            => $offset,
-                'order'             => $sort_order,
-                'post__not_in'      => array( $excluded_post )
-            );
-        } /** End if - sort order */
+            $query_args = array_merge( $query_args, array( 'order' => $sort_order ) );
+        } /** End if - set query argument parameter */
 
-        /** @var $bnsft_query - New query object to hold specific posts */
-        $bnsft_query = new WP_Query( $query_args );
+        /**
+         * Check if post need to be in *all* tags and make necessary
+         * changes to the data so it can be correctly used
+         */
+        if ( $union ) {
 
-        if ( $show_tag_desc ) {
-            echo '<div class="bnsft-tag-desc">' . tag_description() . '</div>';
-        } /** End if - show tag description */
+            /** Remove the default use any tag parameter */
+            unset( $query_args['tag'] );
 
-        /** Display posts from widget settings */
-        if ( $bnsft_query->have_posts()) : while ( $bnsft_query->have_posts() ) : $bnsft_query->the_post();
+            /** @var string $union_tag_choice - $tag_choice without spaces */
+            $union_tag_choice = preg_replace( '/\s+/', '', $tag_choice );
+            /** @var array $tag_choice_union - derived from the string */
+            $tag_choice_union = explode( ",", $union_tag_choice );
 
-            if ( $count == $show_count ) {
-                break;
-            } else { ?>
+            /** Sanity testing? - Change strings to integer values */
+            foreach ( $tag_choice_union AS $index => $value )
+                $tag_choice_union[$index] = (int)$value;
 
-                <div <?php post_class(); ?>>
+            /** @var array $query_args - merged new query arguments */
+            $query_args = array_merge( $query_args, array( 'tag__and' => $tag_choice_union ) );
 
-                    <?php if ( ! $no_titles ) { ?>
-                        <strong><a href="<?php the_permalink() ?>" rel="bookmark" title="<?php _e( 'Permanent Link to', 'bns-ft' ); ?> <?php the_title_attribute(); ?>"><?php the_title(); ?></a></strong>
-                    <?php } ?>
+        } /** End if - do we want to use a union of the categories */
 
-                    <div class="post-details">
+        if ( is_single() && $union ) {
 
-                        <?php if ( $show_meta ) {
-                            echo apply_filters( 'bnsfc_show_meta', sprintf( __( 'by %1$s on %2$s', 'bns-fc' ), get_the_author(), get_the_time( get_option( 'date_format' ) ) ) ); ?><br />
-                        <?php } /** End if - show meta */
+            /** Remove the use all tags parameter */
+            unset( $query_args['tag__and'] );
 
-                        if ( ( $show_comments ) && ( ! post_password_required() ) ) {
-                            comments_popup_link( __( 'with No Comments', 'bns-ft' ), __( 'with 1 Comment', 'bns-ft' ), __( 'with % Comments', 'bns-ft' ), '', __( 'with Comments Closed', 'bns-ft' ) ); ?><br />
-                        <?php } /** End if - show comments */
+            /** @var array $query_args - add the all tags parameter back */
+            $query_args = array_merge( $query_args, array( 'tag' => $tag_choice ) );
 
-                        if ( $show_cats ) {
-                            echo apply_filters( 'bnsfc_show_cats', sprintf( __( 'in %s', 'bns-fc' ), get_the_category_list( ', ' ) ) ); ?><br />
-                        <?php } /** End if - show categories */
+        } /** End if - is single and union */
 
-                        if ( $show_tags ) {
-                            the_tags( __( 'as ', 'bns-ft' ), ', ', '' ); ?><br />
-                        <?php } /** End if - show tags */ ?>
+        /** @var $bnsft_query - object of posts matching query criteria */
+        $bnsft_query = false;
 
-                    </div> <!-- .post-details -->
+        /** Allow query to be completely over-written via `bnsft_query` hook */
+        apply_filters( 'bnsft_query', $bnsft_query );
 
-                    <?php if ( ! $only_titles ) { ?>
+        if ( false == $bnsft_query ) {
+            $bnsft_query = new WP_Query( $query_args );
+        } /** End if - bnsft query is false, use plugin arguments */
 
-                        <div class="bnsft-content">
+        /** @var $bnsft_output - hook test */
+        $bnsft_output = false;
 
-                            <?php if ( $show_full ) {
+        /** Allow entire output to be filtered via hook `bnsft_output` */
+        apply_filters( 'bnsft_output', $bnsft_output );
 
-                                /** Conditions: Theme supports post-thumbnails -and- there is a post-thumbnail -and- the option to show the post thumbnail is checked */
-                                if ( current_theme_supports( 'post-thumbnails' ) && has_post_thumbnail() && ( $use_thumbnails ) ) { ?>
-                                    <a href="<?php the_permalink() ?>" rel="bookmark" title="<?php _e( 'Permanent Link to', 'bns-ft' ); ?> <?php the_title_attribute(); ?>"><?php the_post_thumbnail( array( $content_thumb, $content_thumb ) , array( 'class' => 'alignleft' ) ); ?></a>
-                                <?php } /** End if  */
+        if ( false == $bnsft_output ) {
 
-                                the_content(); ?>
+            if ( $show_tag_desc ) {
+                echo '<div class="bnsft-tag-desc">' . tag_description() . '</div>';
+            } /** End if - show tag description */
 
-                                <div class="bnsft-clear"></div>
+            /** Display posts from widget settings */
+            if ( $bnsft_query->have_posts()) : while ( $bnsft_query->have_posts() ) : $bnsft_query->the_post();
 
-                                <?php wp_link_pages( array( 'before' => '<p><strong>' . __( 'Pages: ', 'bns-ft') . '</strong>', 'after' => '</p>', 'next_or_number' => 'number' ) );
+                if ( $count == $show_count ) {
+                    break;
+                } else { ?>
 
-                            } elseif ( isset( $instance['excerpt_length']) && $instance['excerpt_length'] > 0 ) {
+                    <div <?php post_class(); ?>>
 
-                                if ( current_theme_supports( 'post-thumbnails' ) && has_post_thumbnail() && ( $use_thumbnails ) ) { ?>
-                                    <a href="<?php the_permalink() ?>" rel="bookmark" title="<?php _e( 'Permanent Link to', 'bns-ft' ); ?> <?php the_title_attribute(); ?>"><?php the_post_thumbnail( array( $excerpt_thumb, $excerpt_thumb ) , array( 'class' => 'alignleft' ) ); ?></a>
-                                <?php } /** End if */
+                        <?php if ( ! $no_titles ) { ?>
+                            <strong><a href="<?php the_permalink() ?>" rel="bookmark" title="<?php _e( 'Permanent Link to', 'bns-ft' ); ?> <?php the_title_attribute(); ?>"><?php the_title(); ?></a></strong>
+                        <?php } ?>
 
-                                echo $this->bnsft_custom_excerpt( get_the_content(), $instance['excerpt_length'] );
+                        <div class="post-details">
 
-                            } elseif ( ! $instance['no_excerpt'] ) {
+                            <?php if ( $show_meta ) {
+                                echo apply_filters( 'bnsfc_show_meta', sprintf( __( 'by %1$s on %2$s', 'bns-fc' ), get_the_author(), get_the_time( get_option( 'date_format' ) ) ) ); ?><br />
+                            <?php } /** End if - show meta */
 
-                                if ( current_theme_supports( 'post-thumbnails' ) && has_post_thumbnail() && ( $use_thumbnails ) ) { ?>
-                                    <a href="<?php the_permalink() ?>" rel="bookmark" title="<?php _e( 'Permanent Link to', 'bns-ft' ); ?> <?php the_title_attribute(); ?>"><?php the_post_thumbnail( array( $excerpt_thumb, $excerpt_thumb ) , array( 'class' => 'alignleft' ) ); ?></a>
-                                <?php } /** End if */
+                            if ( ( $show_comments ) && ( ! post_password_required() ) ) {
+                                comments_popup_link( __( 'with No Comments', 'bns-ft' ), __( 'with 1 Comment', 'bns-ft' ), __( 'with % Comments', 'bns-ft' ), '', __( 'with Comments Closed', 'bns-ft' ) ); ?><br />
+                            <?php } /** End if - show comments */
 
-                                the_excerpt();
+                            if ( $show_cats ) {
+                                echo apply_filters( 'bnsfc_show_cats', sprintf( __( 'in %s', 'bns-fc' ), get_the_category_list( ', ' ) ) ); ?><br />
+                            <?php } /** End if - show categories */
 
-                            } else {
+                            if ( $show_tags ) {
+                                the_tags( __( 'as ', 'bns-ft' ), ', ', '' ); ?><br />
+                            <?php } /** End if - show tags */ ?>
 
-                                if ( current_theme_supports( 'post-thumbnails' ) && has_post_thumbnail() && ( $use_thumbnails ) ) { ?>
-                                    <a href="<?php the_permalink() ?>" rel="bookmark" title="<?php _e( 'Permanent Link to', 'bns-ft' ); ?> <?php the_title_attribute(); ?>"><?php the_post_thumbnail( array( $content_thumb, $content_thumb ) , array( 'class' => 'alignleft' ) ); ?></a>
-                                <?php } /** End if */
+                        </div> <!-- .post-details -->
 
-                                the_excerpt();
+                        <?php if ( ! $only_titles ) { ?>
 
-                            } /** End if - show full */ ?>
+                            <div class="bnsft-content">
 
-                        </div> <!-- .bnsft-content -->
+                                <?php if ( $show_full ) {
 
-                    <?php } /** End if - not only titles */ ?>
+                                    /** Conditions: Theme supports post-thumbnails -and- there is a post-thumbnail -and- the option to show the post thumbnail is checked */
+                                    if ( current_theme_supports( 'post-thumbnails' ) && has_post_thumbnail() && ( $use_thumbnails ) ) { ?>
+                                        <a href="<?php the_permalink() ?>" rel="bookmark" title="<?php _e( 'Permanent Link to', 'bns-ft' ); ?> <?php the_title_attribute(); ?>"><?php the_post_thumbnail( array( $content_thumb, $content_thumb ) , array( 'class' => 'alignleft' ) ); ?></a>
+                                    <?php } /** End if  */
 
-                </div> <!-- .post #post-ID -->
+                                    the_content(); ?>
 
-            <?php $count++;
+                                    <div class="bnsft-clear"></div>
 
-            } /** End if - count */
+                                    <?php wp_link_pages( array( 'before' => '<p><strong>' . __( 'Pages: ', 'bns-ft') . '</strong>', 'after' => '</p>', 'next_or_number' => 'number' ) );
 
-        endwhile; else :
+                                } elseif ( isset( $instance['excerpt_length']) && $instance['excerpt_length'] > 0 ) {
 
-            _e( 'Yes, we have no bananas, or posts, today.', 'bns-ft' );
+                                    if ( current_theme_supports( 'post-thumbnails' ) && has_post_thumbnail() && ( $use_thumbnails ) ) { ?>
+                                        <a href="<?php the_permalink() ?>" rel="bookmark" title="<?php _e( 'Permanent Link to', 'bns-ft' ); ?> <?php the_title_attribute(); ?>"><?php the_post_thumbnail( array( $excerpt_thumb, $excerpt_thumb ) , array( 'class' => 'alignleft' ) ); ?></a>
+                                    <?php } /** End if */
 
-        endif; /** End if - have posts */
+                                    echo $this->bnsft_custom_excerpt( get_the_content(), $instance['excerpt_length'] );
+
+                                } elseif ( ! $instance['no_excerpt'] ) {
+
+                                    if ( current_theme_supports( 'post-thumbnails' ) && has_post_thumbnail() && ( $use_thumbnails ) ) { ?>
+                                        <a href="<?php the_permalink() ?>" rel="bookmark" title="<?php _e( 'Permanent Link to', 'bns-ft' ); ?> <?php the_title_attribute(); ?>"><?php the_post_thumbnail( array( $excerpt_thumb, $excerpt_thumb ) , array( 'class' => 'alignleft' ) ); ?></a>
+                                    <?php } /** End if */
+
+                                    the_excerpt();
+
+                                } else {
+
+                                    if ( current_theme_supports( 'post-thumbnails' ) && has_post_thumbnail() && ( $use_thumbnails ) ) { ?>
+                                        <a href="<?php the_permalink() ?>" rel="bookmark" title="<?php _e( 'Permanent Link to', 'bns-ft' ); ?> <?php the_title_attribute(); ?>"><?php the_post_thumbnail( array( $content_thumb, $content_thumb ) , array( 'class' => 'alignleft' ) ); ?></a>
+                                    <?php } /** End if */
+
+                                    the_excerpt();
+
+                                } /** End if - show full */ ?>
+
+                            </div> <!-- .bnsft-content -->
+
+                        <?php } /** End if - not only titles */ ?>
+
+                    </div> <!-- .post #post-ID -->
+
+                <?php $count++;
+
+                } /** End if - count */
+
+            endwhile; else :
+
+                _e( 'Yes, we have no bananas, or posts, today.', 'bns-ft' );
+
+            endif; /** End if - have posts */
+
+        } /** End if - replace entire output when hook `bnsft_output` is used */
 
         /** @var $after_widget string - defined by theme */
         echo $after_widget;
@@ -442,28 +492,29 @@ class BNS_Featured_Tag_Widget extends WP_Widget {
         $instance = $old_instance;
 
         /** Strip tags (if needed) and update the widget settings */
-        $instance['title']           = strip_tags( $new_instance['title'] );
-        $instance['tag_choice']	  	 = strip_tags( $new_instance['tag_choice'] );
-        $instance['use_current']     = $new_instance['use_current'];
-        $instance['exclude_current'] = $new_instance['exclude_current'];
-        $instance['show_count']      = $new_instance['show_count'];
-        $instance['offset']          = $new_instance['offset'];
-        $instance['sort_order']      = $new_instance['sort_order'];
-        $instance['use_thumbnails']	 = $new_instance['use_thumbnails'];
-        $instance['content_thumb']	 = $new_instance['content_thumb'];
-        $instance['excerpt_thumb']	 = $new_instance['excerpt_thumb'];
-        $instance['show_meta']       = $new_instance['show_meta'];
-        $instance['show_comments']	 = $new_instance['show_comments'];
-        $instance['show_cats']       = $new_instance['show_cats'];
-        $instance['show_tags']       = $new_instance['show_tags'];
-        $instance['show_tag_desc']	 = $new_instance['show_tag_desc'];
-        $instance['only_titles']  	 = $new_instance['only_titles'];
-        $instance['no_titles']       = $new_instance['no_titles'];
-        $instance['show_full']       = $new_instance['show_full'];
-        $instance['excerpt_length']	 = $new_instance['excerpt_length'];
-        $instance['no_excerpt']      = $new_instance['no_excerpt'];
+        $instance['title']              = strip_tags( $new_instance['title'] );
+        $instance['tag_choice']         = strip_tags( $new_instance['tag_choice'] );
+        $instance['union']              = $new_instance['union'];
+        $instance['use_current']        = $new_instance['use_current'];
+        $instance['exclude_current']    = $new_instance['exclude_current'];
+        $instance['show_count']         = $new_instance['show_count'];
+        $instance['offset']             = $new_instance['offset'];
+        $instance['sort_order']         = $new_instance['sort_order'];
+        $instance['use_thumbnails']     = $new_instance['use_thumbnails'];
+        $instance['content_thumb']      = $new_instance['content_thumb'];
+        $instance['excerpt_thumb']      = $new_instance['excerpt_thumb'];
+        $instance['show_meta']          = $new_instance['show_meta'];
+        $instance['show_comments']      = $new_instance['show_comments'];
+        $instance['show_cats']          = $new_instance['show_cats'];
+        $instance['show_tags']          = $new_instance['show_tags'];
+        $instance['show_tag_desc']      = $new_instance['show_tag_desc'];
+        $instance['only_titles']        = $new_instance['only_titles'];
+        $instance['no_titles']          = $new_instance['no_titles'];
+        $instance['show_full']          = $new_instance['show_full'];
+        $instance['excerpt_length']     = $new_instance['excerpt_length'];
+        $instance['no_excerpt']         = $new_instance['no_excerpt'];
         /** added to be able to reset count to zero for every instance of the plugin */
-        $instance['count']           = $new_instance['count'];
+        $instance['count']              = $new_instance['count'];
 
         return $instance;
 
@@ -482,6 +533,7 @@ class BNS_Featured_Tag_Widget extends WP_Widget {
         $defaults = array(
             'title'             => __( 'Featured Tag', 'bns-ft' ),
             'tag_choice'        => '',
+            'union'             => false,
             'use_current'       => false,
             'exclude_current'   => false,
             'count'             => '0',
@@ -515,18 +567,23 @@ class BNS_Featured_Tag_Widget extends WP_Widget {
         </p>
 
         <p>
+            <input class="checkbox" type="checkbox" <?php checked( (bool) $instance['union'], true ); ?> id="<?php echo $this->get_field_id( 'union' ); ?>" name="<?php echo $this->get_field_name( 'union' ); ?>" />
+            <label for="<?php echo $this->get_field_id( 'union' ); ?>"><?php _e( '<em>(beta)</em> <strong>ONLY</strong> show posts that have <strong>ALL</strong> of the Tag IDs (You <strong>MUST</strong> only use <em>Tag IDs</em> in the Tag Names field above.)', 'bns-ft' ); ?></label>
+        </p>
+
+        <p>
             <input class="checkbox" type="checkbox" <?php checked( (bool) $instance['show_tag_desc'], true ); ?> id="<?php echo $this->get_field_id( 'show_tag_desc' ); ?>" name="<?php echo $this->get_field_name( 'show_tag_desc' ); ?>" />
             <label for="<?php echo $this->get_field_id( 'show_tag_desc' ); ?>"><?php _e( 'Show first Tag choice description?', 'bns-ft' ); ?></label>
         </p>
 
         <p>
             <input class="checkbox" type="checkbox" <?php checked( (bool) $instance['use_current'], true ); ?> id="<?php echo $this->get_field_id( 'use_current' ); ?>" name="<?php echo $this->get_field_name( 'use_current' ); ?>" />
-            <label for="<?php echo $this->get_field_id( 'use_current' ); ?>"><?php _e( '(beta) Use current tag in single view?', 'bns-ft' ); ?></label>
+            <label for="<?php echo $this->get_field_id( 'use_current' ); ?>"><?php _e( 'Use current tag(s) in single view?<br />Recommended if using "...ALL of the Tag IDs" option above.', 'bns-ft' ); ?></label>
         </p>
 
         <p>
             <input class="checkbox" type="checkbox" <?php checked( (bool) $instance['exclude_current'], true ); ?> id="<?php echo $this->get_field_id( 'exclude_current' ); ?>" name="<?php echo $this->get_field_name( 'exclude_current' ); ?>" />
-            <label for="<?php echo $this->get_field_id( 'exclude_current' ); ?>"><?php _e( '(beta) Exclude the current post in single view?', 'bns-ft' ); ?></label>
+            <label for="<?php echo $this->get_field_id( 'exclude_current' ); ?>"><?php _e( 'Exclude current post in single view?', 'bns-ft' ); ?></label>
         </p>
 
         <table class="bnsft-counts">
@@ -680,8 +737,9 @@ class BNS_Featured_Tag_Widget extends WP_Widget {
             $instance = shortcode_atts( array(
                 'title'             => __( 'Featured Tag', 'bns-ft' ),
                 'tag_choice'        => '',
-                'use_current'       => false, /** Beta */
-                'exclude_current'   => false, /** Beta */
+                'union'             => false,
+                'use_current'       => false,
+                'exclude_current'   => false,
                 'count'             => '0',
                 'show_count'        => '3',
                 'offset'            => '',
@@ -729,3 +787,36 @@ class BNS_Featured_Tag_Widget extends WP_Widget {
 
 /** @var $bnsft - instantiate the class */
 $bnsft = new BNS_Featured_Tag_Widget();
+
+
+/**
+ * BNSFT Plugin Meta
+ * Adds additional links to plugin meta links
+ *
+ * @package BNS_Featured_Tag
+ * @since   2.4.1
+ *
+ * @uses    __
+ * @uses    plugin_basename
+ *
+ * @param   $links
+ * @param   $file
+ *
+ * @return  array $links
+ */
+function bnsft_plugin_meta( $links, $file ) {
+
+    $plugin_file = plugin_basename( __FILE__ );
+
+    if ( $file == $plugin_file ) {
+
+        $links[] = '<a href="https://github.com/Cais/BNS-Featured-Tag">' . __( 'Fork on Github', 'bns-ft' ) . '</a>';
+
+    } /** End if - file is the same as plugin */
+
+    return $links;
+
+} /** End function - plugin meta */
+
+/** Add Plugin Row Meta details */
+add_filter( 'plugin_row_meta', 'bnsft_plugin_meta', 10, 2 );
