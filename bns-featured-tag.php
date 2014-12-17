@@ -3,10 +3,10 @@
 Plugin Name: BNS Featured Tag
 Plugin URI: http://buynowshop.com/plugins/bns-featured-tag/
 Description: Plugin with multi-widget functionality that displays most recent posts from specific tag or tags (set with user options). Also includes user options to display: Tag Description; Author and meta details; comment totals; post categories; post tags; and either full post or excerpt (or any combination).
-Version: 2.6
+Version: 2.7
 Author: Edward Caissie
 Author URI: http://edwardcaissie.com/
-Textdomain: bns-ft
+Textdomain: bns-featured-tag
 License: GNU General Public License v2
 License URI: http://www.gnu.org/licenses/old-licenses/gpl-2.0.html
 */
@@ -20,10 +20,13 @@ License URI: http://www.gnu.org/licenses/old-licenses/gpl-2.0.html
  * categories; post tags; and either full post or excerpt (or any combination).
  *
  * @package     BNS_Featured_Tag
+ * @version     2.7
+ * @date        December 2014
+ *
  * @link        http://buynowshop.com/plugins/bns-featured-tag/
  * @link        https://github.com/Cais/bns-featured-tag/
  * @link        http://wordpress.org/extend/plugins/bns-featured-tag/
- * @version     2.6
+ *
  * @author      Edward Caissie <edward.caissie@gmail.com>
  * @copyright   Copyright (c) 2009-2014, Edward Caissie
  *
@@ -47,13 +50,6 @@ License URI: http://www.gnu.org/licenses/old-licenses/gpl-2.0.html
  * The license for this software can also likely be found here:
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
- * @version     2.5
- * Added new "union" option so posts must be in all tags chosen
- *
- * @version     2.6
- * @date        May 2014
- * Update required version to WordPress 3.6
- *
  * @todo        Add Link to title option
  */
 class BNS_Featured_Tag_Widget extends WP_Widget {
@@ -62,14 +58,21 @@ class BNS_Featured_Tag_Widget extends WP_Widget {
 	 * Constructor - BNS Featured Tag Widget
 	 * The factory extension
 	 *
-	 * @package         BNS_Featured_Tag
-	 * @since           1.0
+	 * @package BNS_Featured_Tag
+	 * @since   1.0
 	 *
-	 * @uses    (class) WP_Widget
-	 * @uses            __
-	 * @uses            add_action
-	 * @uses            add_filter
-	 * @uses            add_shortcode
+	 * @uses    (CONSTANT) WP_CONTENT_DIR
+	 * @uses    BNS_Featured_Tag_Widget::WP_Widget (factory)
+	 * @uses    BNS_Featured_Tag_Widget::bnsft_shortcode
+	 * @uses    BNS_Featured_Tag_Widget::load_widget
+	 * @uses    BNS_Featured_Tag_Widget::plugin_meta
+	 * @uses    BNS_Featured_Tag_Widget::scripts_and_styles
+	 * @uses    BNS_Featured_Tag_Widget::scripts_and_styles_for_options
+	 * @uses    __
+	 * @uses    add_action
+	 * @uses    add_filter
+	 * @uses    add_shortcode
+	 * @uses    content_url
 	 */
 	function BNS_Featured_Tag_Widget() {
 		/**
@@ -78,7 +81,7 @@ class BNS_Featured_Tag_Widget extends WP_Widget {
 		 * @internal    @uses shortcode_atts with optional shortcode filter parameter
 		 */
 		global $wp_version;
-		$exit_message = __( 'BNS Featured Tag requires WordPress version 3.6 or newer. <a href="http://codex.wordpress.org/Upgrading_WordPress">Please Update!</a>', 'bns-ft' );
+		$exit_message = __( 'BNS Featured Tag requires WordPress version 3.6 or newer. <a href="http://codex.wordpress.org/Upgrading_WordPress">Please Update!</a>', 'bns-featured-tag' );
 		if ( version_compare( $wp_version, "3.6", "<" ) ) {
 			exit ( $exit_message );
 		}
@@ -87,7 +90,7 @@ class BNS_Featured_Tag_Widget extends WP_Widget {
 		/** Widget settings */
 		$widget_ops = array(
 			'classname'   => 'bns-featured-tag',
-			'description' => __( 'Displays most recent posts from a specific featured tag or tags.', 'bns-ft' )
+			'description' => __( 'Displays most recent posts from a specific featured tag or tags.', 'bns-featured-tag' )
 		);
 
 		/** Widget control settings */
@@ -110,7 +113,7 @@ class BNS_Featured_Tag_Widget extends WP_Widget {
 		add_action(
 			'wp_enqueue_scripts', array(
 				$this,
-				'BNSFT_Scripts_and_Styles'
+				'scripts_and_styles'
 			)
 		);
 
@@ -118,23 +121,23 @@ class BNS_Featured_Tag_Widget extends WP_Widget {
 		add_action(
 			'admin_enqueue_scripts', array(
 				$this,
-				'BNSFT_Options_Scripts_and_Styles'
+				'scripts_and_styles_for_options'
 			)
 		);
 
 		/** Add Plugin Row Meta details */
 		add_filter(
 			'plugin_row_meta', array(
-				$this,
-				'bnsft_plugin_meta'
-			), 10, 2
+			$this,
+			'plugin_meta'
+		), 10, 2
 		);
 
 		/** Add Shortcode */
 		add_shortcode( 'bnsft', array( $this, 'bnsft_shortcode' ) );
 
-		/** Add load_bnsft_widget function to the widgets_init hook */
-		add_action( 'widgets_init', array( $this, 'load_bnsft_widget' ) );
+		/** Add load_widget function to the widgets_init hook */
+		add_action( 'widgets_init', array( $this, 'load_widget' ) );
 
 	} /** End function - constructor */
 
@@ -153,6 +156,7 @@ class BNS_Featured_Tag_Widget extends WP_Widget {
 	 * @param       $text   - post content
 	 * @param   int $length - user defined amount of words
 	 *
+	 * @uses    __
 	 * @uses    apply_filters
 	 * @uses    get_permalink
 	 * @uses    the_title_attribute
@@ -163,7 +167,7 @@ class BNS_Featured_Tag_Widget extends WP_Widget {
 	 * @date    December 1, 2012
 	 * Added filter to full post link element
 	 */
-	function bnsft_custom_excerpt( $text, $length = 55 ) {
+	function custom_excerpt( $text, $length = 55 ) {
 		$text  = strip_tags( $text );
 		$words = explode( ' ', $text, $length + 1 );
 
@@ -174,13 +178,13 @@ class BNS_Featured_Tag_Widget extends WP_Widget {
 		$bnsft_link = ' <strong>
             <a class="bnsft-link" href="' . get_permalink() . '" title="' . the_title_attribute(
 				array(
-					'before' => __( 'Permalink to: ', 'bns-ft' ),
+					'before' => __( 'Permalink to: ', 'bns-featured-tag' ),
 					'after'  => '',
 					'echo'   => false
 				)
 			) . '">'
-					  . $link_symbol .
-					  '</a>
+		              . $link_symbol .
+		              '</a>
 				</strong>';
 
 		if ( ( ! $length ) || ( count( $words ) < $length ) ) {
@@ -207,8 +211,8 @@ class BNS_Featured_Tag_Widget extends WP_Widget {
 	 * @package            BNS_Featured_Tag
 	 * @since              1.9
 	 *
-	 * @uses    (constant) BNS_CUSTOM_PATH
-	 * @uses    (constant) BNS_CUSTOM_URL
+	 * @uses               (CONSTANT) BNS_CUSTOM_PATH
+	 * @uses               (CONSTANT) BNS_CUSTOM_URL
 	 * @uses               BNS_Featured_Tag_Widget::plugin_data
 	 * @uses               plugin_dir_path
 	 * @uses               plugin_dir_url
@@ -229,7 +233,7 @@ class BNS_Featured_Tag_Widget extends WP_Widget {
 	 * Extracted `plugin_data` into its own method
 	 * Added upgrade safe path location for custom styles
 	 */
-	function BNSFT_Scripts_and_Styles() {
+	function scripts_and_styles() {
 
 		$bnsft_data = $this->plugin_data();
 
@@ -251,15 +255,15 @@ class BNS_Featured_Tag_Widget extends WP_Widget {
 
 
 	/**
-	 * Enqueue Options Plugin Scripts and Styles
+	 * Enqueue Scripts and Styles for Options
 	 *
 	 * Add plugin options scripts and stylesheet(s) to be used only on the Administration Panels
 	 *
 	 * @package            BNS_Featured_Tag
 	 * @since              2.0
 	 *
-	 * @uses    (constant) BNS_CUSTOM_PATH
-	 * @uses    (constant) BNS_CUSTOM_URL
+	 * @uses               (CONSTANT) BNS_CUSTOM_PATH
+	 * @uses               (CONSTANT) BNS_CUSTOM_URL
 	 * @uses               BNS_Featured_Tag_Widget::plugin_data
 	 * @uses               plugin_dir_path
 	 * @uses               plugin_dir_url
@@ -274,7 +278,7 @@ class BNS_Featured_Tag_Widget extends WP_Widget {
 	 * Added upgrade safe path location for custom styles
 	 * Extracted `plugin_data` into its own method
 	 */
-	function BNSFT_Options_Scripts_and_Styles() {
+	function scripts_and_styles_for_options() {
 
 		$bnsft_data = $this->plugin_data();
 
@@ -417,7 +421,7 @@ class BNS_Featured_Tag_Widget extends WP_Widget {
 
 			/** Sanity testing? - Change strings to integer values */
 			foreach ( $tag_choice_union AS $index => $value ) {
-				$tag_choice_union[$index] = (int) $value;
+				$tag_choice_union[ $index ] = (int) $value;
 			}
 
 			/** @var array $query_args - merged new query arguments */
@@ -473,35 +477,35 @@ class BNS_Featured_Tag_Widget extends WP_Widget {
 
 						<?php if ( ! $no_titles ) { ?>
 							<strong><a href="<?php the_permalink() ?>"
-									   rel="bookmark"
-									   title="<?php _e( 'Permanent Link to', 'bns-ft' ); ?> <?php the_title_attribute(); ?>"><?php the_title(); ?></a></strong>
+							           rel="bookmark"
+							           title="<?php _e( 'Permanent Link to', 'bns-featured-tag' ); ?> <?php the_title_attribute(); ?>"><?php the_title(); ?></a></strong>
 						<?php } ?>
 
 						<div class="post-details">
 
 							<?php if ( $show_meta ) {
-								echo apply_filters( 'bnsfc_show_meta', sprintf( __( 'by %1$s on %2$s', 'bns-fc' ), get_the_author(), get_the_time( get_option( 'date_format' ) ) ) ); ?>
+								echo apply_filters( 'bnsft_show_meta', sprintf( __( 'by %1$s on %2$s', 'bns-featured-tag' ), get_the_author(), get_the_time( get_option( 'date_format' ) ) ) ); ?>
 								<br />
 							<?php
 							}
 							/** End if - show meta */
 
 							if ( ( $show_comments ) && ( ! post_password_required() ) ) {
-								comments_popup_link( __( 'with No Comments', 'bns-ft' ), __( 'with 1 Comment', 'bns-ft' ), __( 'with % Comments', 'bns-ft' ), '', __( 'with Comments Closed', 'bns-ft' ) ); ?>
+								comments_popup_link( __( 'with No Comments', 'bns-featured-tag' ), __( 'with 1 Comment', 'bns-featured-tag' ), __( 'with % Comments', 'bns-featured-tag' ), '', __( 'with Comments Closed', 'bns-featured-tag' ) ); ?>
 								<br />
 							<?php
 							}
 							/** End if - show comments */
 
 							if ( $show_cats ) {
-								echo apply_filters( 'bnsfc_show_cats', sprintf( __( 'in %s', 'bns-fc' ), get_the_category_list( ', ' ) ) ); ?>
+								echo apply_filters( 'bnsft_show_cats', sprintf( __( 'in %s', 'bns-featured-tag' ), get_the_category_list( ', ' ) ) ); ?>
 								<br />
 							<?php
 							}
 							/** End if - show categories */
 
 							if ( $show_tags ) {
-								the_tags( __( 'as ', 'bns-ft' ), ', ', '' ); ?>
+								the_tags( __( 'as ', 'bns-featured-tag' ), ', ', '' ); ?>
 								<br />
 							<?php } /** End if - show tags */ ?>
 
@@ -519,7 +523,7 @@ class BNS_Featured_Tag_Widget extends WP_Widget {
 										?>
 										<a href="<?php the_permalink() ?>"
 										   rel="bookmark"
-										   title="<?php _e( 'Permanent Link to', 'bns-ft' ); ?> <?php the_title_attribute(); ?>"><?php the_post_thumbnail(
+										   title="<?php _e( 'Permanent Link to', 'bns-featured-tag' ); ?> <?php the_title_attribute(); ?>"><?php the_post_thumbnail(
 												array(
 													$content_thumb,
 													$content_thumb
@@ -535,7 +539,7 @@ class BNS_Featured_Tag_Widget extends WP_Widget {
 
 									<?php wp_link_pages(
 										array(
-											'before'         => '<p><strong>' . __( 'Pages: ', 'bns-ft' ) . '</strong>',
+											'before'         => '<p><strong>' . __( 'Pages: ', 'bns-featured-tag' ) . '</strong>',
 											'after'          => '</p>',
 											'next_or_number' => 'number'
 										)
@@ -547,7 +551,7 @@ class BNS_Featured_Tag_Widget extends WP_Widget {
 										?>
 										<a href="<?php the_permalink() ?>"
 										   rel="bookmark"
-										   title="<?php _e( 'Permanent Link to', 'bns-ft' ); ?> <?php the_title_attribute(); ?>"><?php the_post_thumbnail(
+										   title="<?php _e( 'Permanent Link to', 'bns-featured-tag' ); ?> <?php the_title_attribute(); ?>"><?php the_post_thumbnail(
 												array(
 													$excerpt_thumb,
 													$excerpt_thumb
@@ -557,7 +561,7 @@ class BNS_Featured_Tag_Widget extends WP_Widget {
 									}
 									/** End if */
 
-									echo $this->bnsft_custom_excerpt( get_the_content(), $instance['excerpt_length'] );
+									echo $this->custom_excerpt( get_the_content(), $instance['excerpt_length'] );
 
 								} elseif ( ! $instance['no_excerpt'] ) {
 
@@ -565,7 +569,7 @@ class BNS_Featured_Tag_Widget extends WP_Widget {
 										?>
 										<a href="<?php the_permalink() ?>"
 										   rel="bookmark"
-										   title="<?php _e( 'Permanent Link to', 'bns-ft' ); ?> <?php the_title_attribute(); ?>"><?php the_post_thumbnail(
+										   title="<?php _e( 'Permanent Link to', 'bns-featured-tag' ); ?> <?php the_title_attribute(); ?>"><?php the_post_thumbnail(
 												array(
 													$excerpt_thumb,
 													$excerpt_thumb
@@ -583,7 +587,7 @@ class BNS_Featured_Tag_Widget extends WP_Widget {
 										?>
 										<a href="<?php the_permalink() ?>"
 										   rel="bookmark"
-										   title="<?php _e( 'Permanent Link to', 'bns-ft' ); ?> <?php the_title_attribute(); ?>"><?php the_post_thumbnail(
+										   title="<?php _e( 'Permanent Link to', 'bns-featured-tag' ); ?> <?php the_title_attribute(); ?>"><?php the_post_thumbnail(
 												array(
 													$content_thumb,
 													$content_thumb
@@ -611,7 +615,7 @@ class BNS_Featured_Tag_Widget extends WP_Widget {
 			endwhile;
 			else :
 
-				apply_filters( 'bnsft_no_posts_message', '<span class="bnsft-no-posts-message">' . __( 'Yes, we have no bananas, or posts, today.', 'bns-ft' ) . '</span>' );
+				apply_filters( 'bnsft_no_posts_message', '<span class="bnsft-no-posts-message">' . __( 'Yes, we have no bananas, or posts, today.', 'bns-featured-tag' ) . '</span>' );
 
 			endif;
 			/** End if - have posts */
@@ -698,7 +702,7 @@ class BNS_Featured_Tag_Widget extends WP_Widget {
 	function form( $instance ) {
 		/** Set up default widget settings */
 		$defaults = array(
-			'title'           => __( 'Featured Tag', 'bns-ft' ),
+			'title'           => __( 'Featured Tag', 'bns-featured-tag' ),
 			'tag_choice'      => '',
 			'union'           => false,
 			'use_current'     => false,
@@ -725,56 +729,56 @@ class BNS_Featured_Tag_Widget extends WP_Widget {
 		?>
 		<p>
 			<label
-				for="<?php echo $this->get_field_id( 'title' ); ?>"><?php _e( 'Title:', 'bns-ft' ); ?></label>
+				for="<?php echo $this->get_field_id( 'title' ); ?>"><?php _e( 'Title:', 'bns-featured-tag' ); ?></label>
 			<input class="widefat" type="text"
-				   id="<?php echo $this->get_field_id( 'title' ); ?>"
-				   name="<?php echo $this->get_field_name( 'title' ); ?>"
-				   value="<?php echo $instance['title']; ?>" />
+			       id="<?php echo $this->get_field_id( 'title' ); ?>"
+			       name="<?php echo $this->get_field_name( 'title' ); ?>"
+			       value="<?php echo $instance['title']; ?>" />
 		</p>
 
 		<p>
 			<label
-				for="<?php echo $this->get_field_id( 'tag_choice' ); ?>"><?php _e( 'Tag slug/ID (must only use one or the other), separated by commas:', 'bns-ft' ); ?></label>
+				for="<?php echo $this->get_field_id( 'tag_choice' ); ?>"><?php _e( 'Tag slug/ID (must only use one or the other), separated by commas:', 'bns-featured-tag' ); ?></label>
 			<input class="widefat" type="text"
-				   id="<?php echo $this->get_field_id( 'tag_choice' ); ?>"
-				   name="<?php echo $this->get_field_name( 'tag_choice' ); ?>"
-				   value="<?php echo $instance['tag_choice']; ?>" />
+			       id="<?php echo $this->get_field_id( 'tag_choice' ); ?>"
+			       name="<?php echo $this->get_field_name( 'tag_choice' ); ?>"
+			       value="<?php echo $instance['tag_choice']; ?>" />
 		</p>
 
 		<p>
 			<input class="checkbox"
-				   type="checkbox" <?php checked( (bool) $instance['union'], true ); ?>
-				   id="<?php echo $this->get_field_id( 'union' ); ?>"
-				   name="<?php echo $this->get_field_name( 'union' ); ?>" />
+			       type="checkbox" <?php checked( (bool) $instance['union'], true ); ?>
+			       id="<?php echo $this->get_field_id( 'union' ); ?>"
+			       name="<?php echo $this->get_field_name( 'union' ); ?>" />
 			<label
-				for="<?php echo $this->get_field_id( 'union' ); ?>"><?php _e( '<em>(beta)</em> <strong>ONLY</strong> show posts that have <strong>ALL</strong> of the Tag IDs (You <strong>MUST</strong> only use <em>Tag IDs</em> in the Tag Names field above.)', 'bns-ft' ); ?></label>
+				for="<?php echo $this->get_field_id( 'union' ); ?>"><?php _e( '<em>(beta)</em> <strong>ONLY</strong> show posts that have <strong>ALL</strong> of the Tag IDs (You <strong>MUST</strong> only use <em>Tag IDs</em> in the Tag Names field above.)', 'bns-featured-tag' ); ?></label>
 		</p>
 
 		<p>
 			<input class="checkbox"
-				   type="checkbox" <?php checked( (bool) $instance['show_tag_desc'], true ); ?>
-				   id="<?php echo $this->get_field_id( 'show_tag_desc' ); ?>"
-				   name="<?php echo $this->get_field_name( 'show_tag_desc' ); ?>" />
+			       type="checkbox" <?php checked( (bool) $instance['show_tag_desc'], true ); ?>
+			       id="<?php echo $this->get_field_id( 'show_tag_desc' ); ?>"
+			       name="<?php echo $this->get_field_name( 'show_tag_desc' ); ?>" />
 			<label
-				for="<?php echo $this->get_field_id( 'show_tag_desc' ); ?>"><?php _e( 'Show first Tag choice description?', 'bns-ft' ); ?></label>
+				for="<?php echo $this->get_field_id( 'show_tag_desc' ); ?>"><?php _e( 'Show first Tag choice description?', 'bns-featured-tag' ); ?></label>
 		</p>
 
 		<p>
 			<input class="checkbox"
-				   type="checkbox" <?php checked( (bool) $instance['use_current'], true ); ?>
-				   id="<?php echo $this->get_field_id( 'use_current' ); ?>"
-				   name="<?php echo $this->get_field_name( 'use_current' ); ?>" />
+			       type="checkbox" <?php checked( (bool) $instance['use_current'], true ); ?>
+			       id="<?php echo $this->get_field_id( 'use_current' ); ?>"
+			       name="<?php echo $this->get_field_name( 'use_current' ); ?>" />
 			<label
-				for="<?php echo $this->get_field_id( 'use_current' ); ?>"><?php _e( 'Use current tag(s) in single view?<br />Recommended if using "...ALL of the Tag IDs" option above.', 'bns-ft' ); ?></label>
+				for="<?php echo $this->get_field_id( 'use_current' ); ?>"><?php _e( 'Use current tag(s) in single view?<br />Recommended if using "...ALL of the Tag IDs" option above.', 'bns-featured-tag' ); ?></label>
 		</p>
 
 		<p>
 			<input class="checkbox"
-				   type="checkbox" <?php checked( (bool) $instance['exclude_current'], true ); ?>
-				   id="<?php echo $this->get_field_id( 'exclude_current' ); ?>"
-				   name="<?php echo $this->get_field_name( 'exclude_current' ); ?>" />
+			       type="checkbox" <?php checked( (bool) $instance['exclude_current'], true ); ?>
+			       id="<?php echo $this->get_field_id( 'exclude_current' ); ?>"
+			       name="<?php echo $this->get_field_name( 'exclude_current' ); ?>" />
 			<label
-				for="<?php echo $this->get_field_id( 'exclude_current' ); ?>"><?php _e( 'Exclude current post in single view?', 'bns-ft' ); ?></label>
+				for="<?php echo $this->get_field_id( 'exclude_current' ); ?>"><?php _e( 'Exclude current post in single view?', 'bns-featured-tag' ); ?></label>
 		</p>
 
 		<table class="bnsft-counts">
@@ -782,21 +786,21 @@ class BNS_Featured_Tag_Widget extends WP_Widget {
 				<td>
 					<p>
 						<label
-							for="<?php echo $this->get_field_id( 'show_count' ); ?>"><?php _e( 'Posts to Display:', 'bns-ft' ); ?></label>
+							for="<?php echo $this->get_field_id( 'show_count' ); ?>"><?php _e( 'Posts to Display:', 'bns-featured-tag' ); ?></label>
 						<input type="text"
-							   id="<?php echo $this->get_field_id( 'show_count' ); ?>"
-							   name="<?php echo $this->get_field_name( 'show_count' ); ?>"
-							   value="<?php echo $instance['show_count']; ?>" />
+						       id="<?php echo $this->get_field_id( 'show_count' ); ?>"
+						       name="<?php echo $this->get_field_name( 'show_count' ); ?>"
+						       value="<?php echo $instance['show_count']; ?>" />
 					</p>
 				</td>
 				<td>
 					<p>
 						<label
-							for="<?php echo $this->get_field_id( 'offset' ); ?>"><?php _e( 'Posts Offset:', 'bns-ft' ); ?></label>
+							for="<?php echo $this->get_field_id( 'offset' ); ?>"><?php _e( 'Posts Offset:', 'bns-featured-tag' ); ?></label>
 						<input type="text"
-							   id="<?php echo $this->get_field_id( 'offset' ); ?>"
-							   name="<?php echo $this->get_field_name( 'offset' ); ?>"
-							   value="<?php echo $instance['offset']; ?>" />
+						       id="<?php echo $this->get_field_id( 'offset' ); ?>"
+						       name="<?php echo $this->get_field_name( 'offset' ); ?>"
+						       value="<?php echo $instance['offset']; ?>" />
 					</p>
 				</td>
 			</tr>
@@ -805,18 +809,18 @@ class BNS_Featured_Tag_Widget extends WP_Widget {
 				<td>
 					<p>
 						<label
-							for="<?php echo $this->get_field_id( 'sort_order' ); ?>"><?php _e( 'Sort Order:', 'bns-ft' ); ?></label>
+							for="<?php echo $this->get_field_id( 'sort_order' ); ?>"><?php _e( 'Sort Order:', 'bns-featured-tag' ); ?></label>
 						<select
 							id="<?php echo $this->get_field_id( 'sort_order' ); ?>"
 							name="<?php echo $this->get_field_name( 'sort_order' ); ?>">
 							<option value="asc" <?php selected( 'asc', $instance['sort_order'], true ); ?>>
-								<?php _e( 'Ascending', 'bns-ft' ); ?>
+								<?php _e( 'Ascending', 'bns-featured-tag' ); ?>
 							</option>
 							<option value="desc" <?php selected( 'desc', $instance['sort_order'], true ); ?>>
-								<?php _e( 'Descending', 'bns-ft' ); ?>
+								<?php _e( 'Descending', 'bns-featured-tag' ); ?>
 							</option>
 							<option value="rand" <?php selected( 'rand', $instance['sort_order'], true ); ?>>
-								<?php _e( 'Random', 'bns-ft' ); ?>
+								<?php _e( 'Random', 'bns-featured-tag' ); ?>
 							</option>
 						</select>
 					</p>
@@ -827,24 +831,24 @@ class BNS_Featured_Tag_Widget extends WP_Widget {
 
 		<hr />
 		<!-- The following option choices may affect the widget option panel layout -->
-		<p><?php _e( 'NB: Some options may not be available depending on which ones are selected.', 'bns-fc' ); ?></p>
-		<p class="bnsfc-display-all-posts-check">
+		<p><?php _e( 'NB: Some options may not be available depending on which ones are selected.', 'bns-featured-tag' ); ?></p>
+		<p class="bnsft-display-all-posts-check">
 			<input class="checkbox"
-				   type="checkbox" <?php checked( ( bool ) $instance['only_titles'], true ); ?>
-				   id="<?php echo $this->get_field_id( 'only_titles' ); ?>"
-				   name="<?php echo $this->get_field_name( 'only_titles' ); ?>" />
+			       type="checkbox" <?php checked( ( bool ) $instance['only_titles'], true ); ?>
+			       id="<?php echo $this->get_field_id( 'only_titles' ); ?>"
+			       name="<?php echo $this->get_field_name( 'only_titles' ); ?>" />
 			<?php $all_options_toggle = ( checked( (bool) $instance['only_titles'], true, false ) ) ? 'closed' : 'open'; ?>
 			<label
-				for="<?php echo $this->get_field_id( 'only_titles' ); ?>"><?php _e( 'ONLY display post Titles?', 'bns-ft' ); ?></label>
+				for="<?php echo $this->get_field_id( 'only_titles' ); ?>"><?php _e( 'ONLY display post Titles?', 'bns-featured-tag' ); ?></label>
 		</p>
 
 		<p class="bnsft-all-options-<?php echo $all_options_toggle; ?> bnsft-no-titles">
 			<input class="checkbox"
-				   type="checkbox" <?php checked( ( bool ) $instance['no_titles'], true ); ?>
-				   id="<?php echo $this->get_field_id( 'no_titles' ); ?>"
-				   name="<?php echo $this->get_field_name( 'no_titles' ); ?>" />
+			       type="checkbox" <?php checked( ( bool ) $instance['no_titles'], true ); ?>
+			       id="<?php echo $this->get_field_id( 'no_titles' ); ?>"
+			       name="<?php echo $this->get_field_name( 'no_titles' ); ?>" />
 			<label
-				for="<?php echo $this->get_field_id( 'no_titles' ); ?>"><?php _e( 'Do NOT display Post Titles?', 'bns-ft' ); ?></label>
+				for="<?php echo $this->get_field_id( 'no_titles' ); ?>"><?php _e( 'Do NOT display Post Titles?', 'bns-featured-tag' ); ?></label>
 		</p>
 
 		<!-- If the theme supports post-thumbnails carry on; otherwise hide the thumbnails section -->
@@ -854,12 +858,12 @@ class BNS_Featured_Tag_Widget extends WP_Widget {
 		<p class="bnsft-all-options-<?php echo $all_options_toggle; ?> bnsft-display-thumbnail-sizes">
 			<!-- Hide all options below if ONLY post titles are to be displayed -->
 			<input class="checkbox"
-				   type="checkbox" <?php checked( (bool) $instance['use_thumbnails'], true ); ?>
-				   id="<?php echo $this->get_field_id( 'use_thumbnails' ); ?>"
-				   name="<?php echo $this->get_field_name( 'use_thumbnails' ); ?>" />
+			       type="checkbox" <?php checked( (bool) $instance['use_thumbnails'], true ); ?>
+			       id="<?php echo $this->get_field_id( 'use_thumbnails' ); ?>"
+			       name="<?php echo $this->get_field_name( 'use_thumbnails' ); ?>" />
 			<?php $thumbnails_toggle = ( checked( (bool) $instance['use_thumbnails'], true, false ) ) ? 'open' : 'closed'; ?>
 			<label
-				for="<?php echo $this->get_field_id( 'use_thumbnails' ); ?>"><?php _e( 'Use Featured Image Thumbnails?', 'bns-ft' ); ?></label>
+				for="<?php echo $this->get_field_id( 'use_thumbnails' ); ?>"><?php _e( 'Use Featured Image Thumbnails?', 'bns-featured-tag' ); ?></label>
 		</p>
 
 		<table
@@ -869,23 +873,23 @@ class BNS_Featured_Tag_Widget extends WP_Widget {
 				<td>
 					<p>
 						<label
-							for="<?php echo $this->get_field_id( 'content_thumb' ); ?>"><?php _e( 'Content Thumbnail Size (in px):', 'bns-ft' ); ?></label>
+							for="<?php echo $this->get_field_id( 'content_thumb' ); ?>"><?php _e( 'Content Thumbnail Size (in px):', 'bns-featured-tag' ); ?></label>
 						<input type="text"
-							   id="<?php echo $this->get_field_id( 'content_thumb' ); ?>"
-							   name="<?php echo $this->get_field_name( 'content_thumb' ); ?>"
-							   value="<?php echo $instance['content_thumb']; ?>"
-							   style="width:85%;" />
+						       id="<?php echo $this->get_field_id( 'content_thumb' ); ?>"
+						       name="<?php echo $this->get_field_name( 'content_thumb' ); ?>"
+						       value="<?php echo $instance['content_thumb']; ?>"
+						       style="width:85%;" />
 					</p>
 				</td>
 				<td>
 					<p>
 						<label
-							for="<?php echo $this->get_field_id( 'excerpt_thumb' ); ?>"><?php _e( 'Excerpt Thumbnail Size (in px):', 'bns-ft' ); ?></label>
+							for="<?php echo $this->get_field_id( 'excerpt_thumb' ); ?>"><?php _e( 'Excerpt Thumbnail Size (in px):', 'bns-featured-tag' ); ?></label>
 						<input type="text"
-							   id="<?php echo $this->get_field_id( 'excerpt_thumb' ); ?>"
-							   name="<?php echo $this->get_field_name( 'excerpt_thumb' ); ?>"
-							   value="<?php echo $instance['excerpt_thumb']; ?>"
-							   style="width:85%;" />
+						       id="<?php echo $this->get_field_id( 'excerpt_thumb' ); ?>"
+						       name="<?php echo $this->get_field_name( 'excerpt_thumb' ); ?>"
+						       value="<?php echo $instance['excerpt_thumb']; ?>"
+						       style="width:85%;" />
 					</p>
 				</td>
 			</tr>
@@ -897,74 +901,74 @@ class BNS_Featured_Tag_Widget extends WP_Widget {
 
 		<p class="bnsft-all-options-<?php echo $all_options_toggle; ?>">
 			<input class="checkbox"
-				   type="checkbox" <?php checked( ( bool ) $instance['show_meta'], true ); ?>
-				   id="<?php echo $this->get_field_id( 'show_meta' ); ?>"
-				   name="<?php echo $this->get_field_name( 'show_meta' ); ?>" />
+			       type="checkbox" <?php checked( ( bool ) $instance['show_meta'], true ); ?>
+			       id="<?php echo $this->get_field_id( 'show_meta' ); ?>"
+			       name="<?php echo $this->get_field_name( 'show_meta' ); ?>" />
 			<label
-				for="<?php echo $this->get_field_id( 'show_meta' ); ?>"><?php _e( 'Display Author Meta Details?', 'bns-ft' ); ?></label>
+				for="<?php echo $this->get_field_id( 'show_meta' ); ?>"><?php _e( 'Display Author Meta Details?', 'bns-featured-tag' ); ?></label>
 		</p>
 
 
 		<p class="bnsft-all-options-<?php echo $all_options_toggle; ?>">
 			<input class="checkbox"
-				   type="checkbox" <?php checked( ( bool ) $instance['show_comments'], true ); ?>
-				   id="<?php echo $this->get_field_id( 'show_comments' ); ?>"
-				   name="<?php echo $this->get_field_name( 'show_comments' ); ?>" />
+			       type="checkbox" <?php checked( ( bool ) $instance['show_comments'], true ); ?>
+			       id="<?php echo $this->get_field_id( 'show_comments' ); ?>"
+			       name="<?php echo $this->get_field_name( 'show_comments' ); ?>" />
 			<label
-				for="<?php echo $this->get_field_id( 'show_comments' ); ?>"><?php _e( 'Display Comment Totals?', 'bns-ft' ); ?></label>
+				for="<?php echo $this->get_field_id( 'show_comments' ); ?>"><?php _e( 'Display Comment Totals?', 'bns-featured-tag' ); ?></label>
 		</p>
 
 		<p class="bnsft-all-options-<?php echo $all_options_toggle; ?>">
 			<input class="checkbox"
-				   type="checkbox" <?php checked( ( bool ) $instance['show_cats'], true ); ?>
-				   id="<?php echo $this->get_field_id( 'show_cats' ); ?>"
-				   name="<?php echo $this->get_field_name( 'show_cats' ); ?>" />
+			       type="checkbox" <?php checked( ( bool ) $instance['show_cats'], true ); ?>
+			       id="<?php echo $this->get_field_id( 'show_cats' ); ?>"
+			       name="<?php echo $this->get_field_name( 'show_cats' ); ?>" />
 			<label
-				for="<?php echo $this->get_field_id( 'show_cats' ); ?>"><?php _e( 'Display the Post Categories?', 'bns-ft' ); ?></label>
+				for="<?php echo $this->get_field_id( 'show_cats' ); ?>"><?php _e( 'Display the Post Categories?', 'bns-featured-tag' ); ?></label>
 		</p>
 
 		<p class="bnsft-all-options-<?php echo $all_options_toggle; ?>">
 			<input class="checkbox"
-				   type="checkbox" <?php checked( ( bool ) $instance['show_tags'], true ); ?>
-				   id="<?php echo $this->get_field_id( 'show_tags' ); ?>"
-				   name="<?php echo $this->get_field_name( 'show_tags' ); ?>" />
+			       type="checkbox" <?php checked( ( bool ) $instance['show_tags'], true ); ?>
+			       id="<?php echo $this->get_field_id( 'show_tags' ); ?>"
+			       name="<?php echo $this->get_field_name( 'show_tags' ); ?>" />
 			<label
-				for="<?php echo $this->get_field_id( 'show_tags' ); ?>"><?php _e( 'Display the Post Tags?', 'bns-ft' ); ?></label>
+				for="<?php echo $this->get_field_id( 'show_tags' ); ?>"><?php _e( 'Display the Post Tags?', 'bns-featured-tag' ); ?></label>
 		</p>
 
 		<p class="bnsft-all-options-<?php echo $all_options_toggle; ?> bnsft-excerpt-option-open-check">
 			<input class="checkbox"
-				   type="checkbox" <?php checked( ( bool ) $instance['show_full'], true ); ?>
-				   id="<?php echo $this->get_field_id( 'show_full' ); ?>"
-				   name="<?php echo $this->get_field_name( 'show_full' ); ?>" />
+			       type="checkbox" <?php checked( ( bool ) $instance['show_full'], true ); ?>
+			       id="<?php echo $this->get_field_id( 'show_full' ); ?>"
+			       name="<?php echo $this->get_field_name( 'show_full' ); ?>" />
 			<?php $show_full_toggle = ( checked( (bool) $instance['show_full'], true, false ) ) ? 'closed' : 'open'; ?>
 			<label
-				for="<?php echo $this->get_field_id( 'show_full' ); ?>"><?php _e( 'Display entire post?', 'bns-ft' ); ?></label>
+				for="<?php echo $this->get_field_id( 'show_full' ); ?>"><?php _e( 'Display entire post?', 'bns-featured-tag' ); ?></label>
 		</p>
 
 		<hr />
 		<!-- Hide excerpt explanation and word count option if entire post is displayed -->
 		<p class="bnsft-all-options-<?php echo $all_options_toggle; ?> bnsft-excerpt-option-<?php echo $show_full_toggle; ?>">
-			<?php _e( 'The post excerpt is shown by default, if it exists; otherwise the first 55 words of the post are shown as the excerpt ...', 'bns-ft' ); ?>
+			<?php _e( 'The post excerpt is shown by default, if it exists; otherwise the first 55 words of the post are shown as the excerpt ...', 'bns-featured-tag' ); ?>
 		</p>
 
 		<p class="bnsft-all-options-<?php echo $all_options_toggle; ?> bnsft-excerpt-option-<?php echo $show_full_toggle; ?>">
 			<label
-				for="<?php echo $this->get_field_id( 'excerpt_length' ); ?>"><?php _e( '... or set the amount of words you want to show:', 'bns-ft' ); ?></label>
+				for="<?php echo $this->get_field_id( 'excerpt_length' ); ?>"><?php _e( '... or set the amount of words you want to show:', 'bns-featured-tag' ); ?></label>
 			<input type="text"
-				   id="<?php echo $this->get_field_id( 'excerpt_length' ); ?>"
-				   name="<?php echo $this->get_field_name( 'excerpt_length' ); ?>"
-				   value="<?php echo $instance['excerpt_length']; ?>"
-				   style="width:95%;" />
+			       id="<?php echo $this->get_field_id( 'excerpt_length' ); ?>"
+			       name="<?php echo $this->get_field_name( 'excerpt_length' ); ?>"
+			       value="<?php echo $instance['excerpt_length']; ?>"
+			       style="width:95%;" />
 		</p>
 
 		<p class="bnsft-all-options-<?php echo $all_options_toggle; ?> bnsft-excerpt-option-<?php echo $show_full_toggle; ?>">
 			<label
-				for="<?php echo $this->get_field_id( 'no_excerpt' ); ?>"><?php _e( '... or have no excerpt at all!', 'bns-ft' ); ?></label>
+				for="<?php echo $this->get_field_id( 'no_excerpt' ); ?>"><?php _e( '... or have no excerpt at all!', 'bns-featured-tag' ); ?></label>
 			<input class="checkbox"
-				   type="checkbox" <?php checked( (bool) $instance['no_excerpt'], true ); ?>
-				   id="<?php echo $this->get_field_id( 'no_excerpt' ); ?>"
-				   name="<?php echo $this->get_field_name( 'no_excerpt' ); ?>" />
+			       type="checkbox" <?php checked( (bool) $instance['no_excerpt'], true ); ?>
+			       id="<?php echo $this->get_field_id( 'no_excerpt' ); ?>"
+			       name="<?php echo $this->get_field_name( 'no_excerpt' ); ?>" />
 		</p>
 
 	<?php
@@ -1002,7 +1006,7 @@ class BNS_Featured_Tag_Widget extends WP_Widget {
 			'BNS_Featured_Tag_Widget',
 			$instance = shortcode_atts(
 				array(
-					'title'           => __( 'Featured Tag', 'bns-ft' ),
+					'title'           => __( 'Featured Tag', 'bns-featured-tag' ),
 					'tag_choice'      => '',
 					'union'           => false,
 					'use_current'     => false,
@@ -1063,7 +1067,7 @@ class BNS_Featured_Tag_Widget extends WP_Widget {
 	 * Added a "wish link"
 	 * Added a "support link"
 	 */
-	function bnsft_plugin_meta( $links, $file ) {
+	function plugin_meta( $links, $file ) {
 
 		$plugin_file = plugin_basename( __FILE__ );
 
@@ -1071,9 +1075,9 @@ class BNS_Featured_Tag_Widget extends WP_Widget {
 
 			$links = array_merge(
 				$links, array(
-					'fork_link'    => '<a href="https://github.com/Cais/BNS-Featured-Tag">' . __( 'Fork on GitHub', 'bns-fc' ) . '</a>',
-					'wish_link'    => '<a href="http://www.amazon.ca/registry/wishlist/2NNNE1PAQIRUL">' . __( 'Grant a wish?', 'bns-fc' ) . '</a>',
-					'support_link' => '<a href="http://wordpress.org/support/plugin/bns-featured-tag">' . __( 'WordPress Support Forums', 'bns-fc' ) . '</a>'
+					'fork_link'    => '<a href="https://github.com/Cais/BNS-Featured-Tag">' . __( 'Fork on GitHub', 'bns-featured-tag' ) . '</a>',
+					'wish_link'    => '<a href="http://www.amazon.ca/registry/wishlist/2NNNE1PAQIRUL">' . __( 'Grant a wish?', 'bns-featured-tag' ) . '</a>',
+					'support_link' => '<a href="http://wordpress.org/support/plugin/bns-featured-tag">' . __( 'WordPress Support Forums', 'bns-featured-tag' ) . '</a>'
 				)
 			);
 
@@ -1111,7 +1115,7 @@ class BNS_Featured_Tag_Widget extends WP_Widget {
 	 * Load Widget
 	 * Register widget
 	 */
-	function load_bnsft_widget() {
+	function load_widget() {
 		register_widget( 'BNS_Featured_Tag_Widget' );
 	}
 	/** End function - register widget */
@@ -1124,3 +1128,122 @@ class BNS_Featured_Tag_Widget extends WP_Widget {
 
 /** @var $bnsft - instantiate the class */
 $bnsft = new BNS_Featured_Tag_Widget();
+
+
+/**
+ * BNS Featured Tag Update Message
+ *
+ * @package BNS_Featured_Tag
+ * @since   2.7
+ *
+ * @uses    get_transient
+ * @uses    is_wp_error
+ * @uses    set_transient
+ * @uses    wp_kses_post
+ * @uses    wp_remote_get
+ *
+ * @param $args
+ */
+function bnsft_in_plugin_update_message( $args ) {
+
+	require_once( ABSPATH . '/wp-admin/includes/plugin.php' );
+	$bnsft_data = get_plugin_data( __FILE__ );
+
+	$transient_name = 'bnsft_upgrade_notice_' . $args['Version'];
+	if ( false === ( $upgrade_notice = get_transient( $transient_name ) ) ) {
+
+		/** @var string $response - get the readme.txt file from WordPress */
+		$response = wp_remote_get( 'https://plugins.svn.wordpress.org/bns-featured-tag/trunk/readme.txt' );
+
+		if ( ! is_wp_error( $response ) && ! empty( $response['body'] ) ) {
+			$matches = null;
+		}
+		$regexp         = '~==\s*Changelog\s*==\s*=\s*(.*)\s*=(.*)(=\s*' . preg_quote( $bnsft_data['Version'] ) . '\s*=|$)~Uis';
+		$upgrade_notice = '';
+
+		if ( preg_match( $regexp, $response['body'], $matches ) ) {
+			$version = trim( $matches[1] );
+			$notices = (array) preg_split( '~[\r\n]+~', trim( $matches[2] ) );
+
+			if ( version_compare( $bnsft_data['Version'], $version, '<' ) ) {
+
+				/** @var string $upgrade_notice - start building message (inline styles) */
+				$upgrade_notice = '<style type="text/css">
+							.bnsft_plugin_upgrade_notice { padding-top: 20px; }
+							.bnsft_plugin_upgrade_notice ul { width: 50%; list-style: disc; margin-left: 20px; margin-top: 0; }
+							.bnsft_plugin_upgrade_notice li { margin: 0; }
+						</style>';
+
+				/** @var string $upgrade_notice - start building message (begin block) */
+				$upgrade_notice .= '<div class="bnsft_plugin_upgrade_notice">';
+
+				$ul = false;
+
+				foreach ( $notices as $index => $line ) {
+
+					if ( preg_match( '~^=\s*(.*)\s*=$~i', $line ) ) {
+
+						if ( $ul ) {
+							$upgrade_notice .= '</ul><div style="clear: left;"></div>';
+						}
+						/** End if - unordered list created */
+
+						$upgrade_notice .= '<hr/>';
+						continue;
+
+					}
+					/** End if - non-blank line */
+
+					/** @var string $return_value - body of message */
+					$return_value = '';
+
+					if ( preg_match( '~^\s*\*\s*~', $line ) ) {
+
+						if ( ! $ul ) {
+							$return_value = '<ul">';
+							$ul           = true;
+						}
+						/** End if - unordered list not started */
+
+						$line = preg_replace( '~^\s*\*\s*~', '', htmlspecialchars( $line ) );
+						$return_value .= '<li style=" ' . ( $index % 2 == 0 ? 'clear: left;' : '' ) . '">' . $line . '</li>';
+
+					} else {
+
+						if ( $ul ) {
+							$return_value = '</ul><div style="clear: left;"></div>';
+							$return_value .= '<p>' . $line . '</p>';
+							$ul = false;
+						} else {
+							$return_value .= '<p>' . $line . '</p>';
+						}
+						/** End if - unordered list started */
+
+					}
+					/** End if - non-blank line */
+
+					$upgrade_notice .= wp_kses_post( preg_replace( '~\[([^\]]*)\]\(([^\)]*)\)~', '<a href="${2}">${1}</a>', $return_value ) );
+
+				}
+				/** End foreach - line parsing */
+
+				$upgrade_notice .= '</div>';
+
+			}
+			/** End if - version compare */
+
+		}
+		/** End if - response message exists */
+
+		/** Set transient - minimize calls to WordPress */
+		set_transient( $transient_name, $upgrade_notice, DAY_IN_SECONDS );
+
+	}
+	/** End if - transient check */
+
+	echo $upgrade_notice;
+
+}
+
+/** End function - in plugin update message */
+add_action( 'in_plugin_update_message-' . plugin_basename( __FILE__ ), 'bnsft_in_plugin_update_message' );
