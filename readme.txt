@@ -137,6 +137,10 @@ As of version 1.6.2 the Total Posts to Display is independent of the "posts per 
   The license for this software can also likely be found here:
   http://www.gnu.org/licenses/gpl-2.0.html
 
+= Acknowledgements =
+
+* Thanks to Benjamin Owens (email: bowens@nachtlich.org) for help with the plugin update message function
+
 == Upgrade Notice ==
 = 2.7 =
 Thank you for choosing `BNS Featured Tags` for your WordPress site.
